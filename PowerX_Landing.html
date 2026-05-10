@@ -1417,24 +1417,256 @@
   .lang-option .lo-check { font-size: 12px; color: var(--violet-soft); width: 14px; text-align: right; }
   .lang-glob { width: 15px; height: 15px; flex-shrink: 0; }
 
-  /* Responsive */
+  /* ───── Burger button ───── */
+  .burger {
+    display: none;
+    flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px;
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line-2);
+    border-radius: 12px;
+    cursor: pointer; padding: 0;
+    transition: background .2s, border-color .2s;
+    flex-shrink: 0;
+  }
+  .burger:hover { background: rgba(255,255,255,0.08); border-color: oklch(65% 0.25 295 / 0.5); }
+  .burger span {
+    display: block; width: 18px; height: 1.5px;
+    background: var(--ink); border-radius: 2px;
+    transition: transform .3s cubic-bezier(.2,.7,.2,1), opacity .25s, width .25s;
+    transform-origin: center;
+  }
+  .burger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .burger.open span:nth-child(2) { opacity: 0; width: 0; }
+  .burger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+  /* ───── Mobile menu ───── */
+  .mob-overlay {
+    position: fixed; inset: 0; z-index: 48;
+    background: rgba(7,5,15,0.65);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    opacity: 0; pointer-events: none;
+    transition: opacity .3s;
+  }
+  .mob-overlay.open { opacity: 1; pointer-events: all; }
+
+  .mob-menu {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: min(300px, 88vw);
+    z-index: 49;
+    background: rgba(9,7,22,0.98);
+    border-left: 1px solid var(--line);
+    backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+    transform: translateX(100%);
+    transition: transform .36s cubic-bezier(.2,.7,.2,1);
+    display: flex; flex-direction: column;
+    box-shadow: -30px 0 80px rgba(0,0,0,0.5);
+  }
+  .mob-menu.open { transform: translateX(0); }
+
+  .mob-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .mob-close {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    display: grid; place-items: center;
+    cursor: pointer; color: var(--ink-dim);
+    transition: background .2s, color .2s;
+  }
+  .mob-close:hover { background: rgba(255,255,255,0.08); color: var(--ink); }
+  .mob-close svg { width: 16px; height: 16px; }
+
+  .mob-nav {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 16px 12px;
+    flex: 1; overflow-y: auto;
+  }
+  .mob-nav a {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    color: var(--ink-dim); text-decoration: none;
+    font-size: 16px; font-weight: 500;
+    border-radius: 12px;
+    transition: background .2s, color .2s;
+    border: 1px solid transparent;
+  }
+  .mob-nav a:hover { background: rgba(255,255,255,0.05); color: var(--ink); border-color: var(--line); }
+
+  .mob-foot {
+    padding: 16px 18px 36px;
+    border-top: 1px solid var(--line);
+    flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .mob-cta {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 15px 24px;
+    background: var(--grad-violet);
+    color: white; text-decoration: none;
+    font-size: 15px; font-weight: 600;
+    border-radius: 14px;
+    box-shadow: var(--glow-violet);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .mob-cta:hover { transform: translateY(-2px); }
+  .mob-lang-grid {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  }
+  .mob-lang-pill {
+    display: flex; align-items: center; gap: 5px;
+    padding: 7px 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink-dim); font-size: 12px;
+    font-family: 'JetBrains Mono', monospace; font-weight: 600;
+    cursor: pointer; letter-spacing: 0.5px;
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .mob-lang-pill.active {
+    background: oklch(65% 0.25 295 / 0.15);
+    border-color: oklch(65% 0.25 295 / 0.5);
+    color: var(--ink);
+  }
+  .mob-lang-pill:hover { background: rgba(255,255,255,0.08); color: var(--ink); }
+  .mob-lang-pill .mf { font-size: 15px; }
+
+  /* ───── Responsive · 980px ───── */
   @media (max-width: 980px) {
     section { padding: 80px 24px; }
+
+    /* Nav */
     nav.top { padding: 14px 20px; }
     nav.top.scrolled { padding: 10px 20px; }
     .nav-links { display: none; }
-    .hero-grid { grid-template-columns: 1fr; gap: 80px; }
-    .hero-visual { max-width: 360px; margin: 0 auto; }
-    .ps-grid, .pillars-grid, .split, .round-wrap, .impact, .cta-stats, .footer-grid, .tok-grid, .uof-cards {
+    .nav-cta { display: none; }
+    .burger { display: flex; }
+
+    /* Hero */
+    .hero { padding-top: 100px; padding-bottom: 40px; min-height: auto; }
+    .hero-grid { grid-template-columns: 1fr; gap: 64px; }
+    .hero-visual { max-width: 380px; margin: 0 auto; }
+    .hero h1 { font-size: clamp(42px, 9vw, 68px); }
+    .hero p.lead { font-size: 16px; }
+    .hero-ctas { flex-direction: column; }
+    .hero-ctas .btn-primary, .hero-ctas .btn-ghost { width: 100%; justify-content: center; }
+    .hero-stats { gap: 20px; flex-wrap: wrap; }
+
+    /* Hide decorative floats on mobile */
+    .wallet-float, .coin-float, .founders-chip { display: none; }
+
+    /* Section grids → single column */
+    .ps-grid, .pillars-grid, .split, .round-wrap, .impact, .tok-grid, .uof-cards {
       grid-template-columns: 1fr;
     }
+    .pillars-head { flex-direction: column; gap: 24px; align-items: flex-start; }
+    .section-sub { font-size: 16px; max-width: 100%; }
+    .pillar { min-height: auto; }
+    .creator-list { grid-template-columns: 1fr; }
+
+    /* Simulator */
     .sim-row { grid-template-columns: 1fr; gap: 6px; }
     .sim-row-r { text-align: left; }
+    .sim-chart { height: 180px; }
+
+    /* CTA */
+    .cta { padding: 100px 24px; }
     .cta-stats { grid-template-columns: 1fr 1fr; }
+    .cta-buttons { flex-direction: column; align-items: stretch; }
+    .cta-buttons a { text-align: center; justify-content: center; }
+
+    /* Footer */
     .footer-grid { grid-template-columns: 1fr 1fr; }
-    .creator-list { grid-template-columns: 1fr; }
-    .hero h1 { font-size: 56px; }
+
+    /* Impact */
     .impact-pct .big { font-size: 100px; }
+
+    /* Tokenomics */
+    .tok-donut-wrap { max-width: 340px; }
+  }
+
+  /* ───── Responsive · 640px ───── */
+  @media (max-width: 640px) {
+    section { padding: 60px 18px; }
+    .hero { padding-top: 90px; }
+    .hero h1 { font-size: clamp(36px, 11vw, 52px); }
+    .hero p.lead { font-size: 15px; }
+    .hero-stats {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 14px; margin-top: 32px;
+    }
+    .hero-stats .stat .v { font-size: 22px; }
+    .hero-ctas .btn-primary, .hero-ctas .btn-ghost { font-size: 14px; padding: 15px 20px; }
+
+    /* Phone visual smaller */
+    .phone { width: 240px; height: 500px; }
+    .hero-visual { max-width: 300px; }
+
+    /* Problem/Solution */
+    .ps-card { padding: 24px; }
+    .ps-card h2 { font-size: 24px; }
+
+    /* Round info */
+    .round-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+    .round-cell .v { font-size: 28px; }
+    .round-info { padding: 28px 22px; }
+
+    /* Pillars */
+    .pillar { padding: 22px 20px; }
+
+    /* Creator + Biz */
+    .creator-card, .biz-card { padding: 28px 22px; }
+    .creator-stat .v { font-size: 22px; }
+
+    /* Tokenomics */
+    .tok-donut-wrap { max-width: 260px; }
+    .tok-center .v { font-size: 42px; }
+
+    /* Use of Funds */
+    .uof { padding: 22px; }
+    .uof-bar { height: 44px; }
+    .uof-seg { padding: 0 10px; font-size: 9px; }
+    .uof-seg .pct { font-size: 14px; }
+
+    /* Impact */
+    .impact-pct .big { font-size: 72px; }
+    .impact-pct, .impact-text { padding: 28px 22px; }
+    .impact-text h3 { font-size: 26px; }
+    .impact-text .pillars-mini { flex-wrap: wrap; gap: 16px; }
+
+    /* CTA */
+    .cta { padding: 70px 18px; }
+    .cta h2 { font-size: clamp(36px, 10vw, 56px); }
+    .cta-stats { gap: 20px; }
+
+    /* Sim */
+    .sim-card { padding: 28px 22px; }
+    .sim-mult-row { flex-direction: column; }
+    .mult-pill { text-align: center; }
+
+    /* Footer */
+    .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+    .copy-row { flex-direction: column; gap: 8px; align-items: center; text-align: center; }
+
+    /* Section title */
+    .section-title { font-size: clamp(30px, 8vw, 48px); }
+  }
+
+  /* ───── Responsive · 400px ───── */
+  @media (max-width: 400px) {
+    .hero h1 { font-size: 34px; }
+    .phone { width: 210px; height: 440px; }
+    .round-grid { grid-template-columns: 1fr; }
+    .hero-stats { grid-template-columns: 1fr; }
+    nav.top { padding: 12px 16px; }
+    .lang-btn .lang-code { display: none; }
   }
 </style>
 </head>
@@ -1491,7 +1723,50 @@
     <span class="dot"></span>
     <span data-i18n="nav-cta">Founders Round</span>
   </a>
+  <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- Mobile menu overlay + drawer -->
+<div class="mob-overlay" id="mobOverlay"></div>
+<div class="mob-menu" id="mobMenu" aria-hidden="true">
+  <div class="mob-head">
+    <a href="#" class="brand" id="mobBrand">
+      <div class="mark">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M13 2L3 14h7l-1 8 11-13h-7l1-7z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="name">PowerX <span>OneWallet</span></div>
+    </a>
+    <button class="mob-close" id="mobClose" aria-label="Close menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+  <nav class="mob-nav">
+    <a href="#problem" data-i18n="nav-vision">Vision</a>
+    <a href="#product" data-i18n="nav-product">Product</a>
+    <a href="#creators" data-i18n="nav-creators">Creators</a>
+    <a href="#round" data-i18n="nav-round">Round</a>
+    <a href="#impact" data-i18n="nav-impact">Impact</a>
+  </nav>
+  <div class="mob-foot">
+    <a href="#round" class="mob-cta">
+      <span class="dot"></span>
+      <span data-i18n="nav-cta">Founders Round</span>
+    </a>
+    <div class="mob-lang-grid">
+      <button class="mob-lang-pill active" data-mobile-lang="en"><span class="mf">🇺🇸</span>EN</button>
+      <button class="mob-lang-pill" data-mobile-lang="vi"><span class="mf">🇻🇳</span>VI</button>
+      <button class="mob-lang-pill" data-mobile-lang="zh"><span class="mf">🇨🇳</span>ZH</button>
+      <button class="mob-lang-pill" data-mobile-lang="ja"><span class="mf">🇯🇵</span>JA</button>
+      <button class="mob-lang-pill" data-mobile-lang="ko"><span class="mf">🇰🇷</span>KO</button>
+    </div>
+  </div>
+</div>
 
 <!-- ════ HERO ════ -->
 <section class="hero" id="hero">
@@ -2687,23 +2962,68 @@
     const meta = LANG_META[lang];
     document.getElementById('langCurrentFlag').textContent = meta.flag;
     document.getElementById('langCurrentCode').textContent = meta.code;
+    // Desktop dropdown
     document.querySelectorAll('.lang-option').forEach(opt => {
       const active = opt.dataset.lang === lang;
       opt.classList.toggle('active', active);
       const ck = opt.querySelector('.lo-check');
       if (ck) ck.textContent = active ? '✓' : '';
     });
+    // Mobile pills
+    document.querySelectorAll('.mob-lang-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.dataset.mobileLang === lang);
+    });
     document.documentElement.lang = lang;
     try { localStorage.setItem('pwx-lang', lang); } catch(e) {}
   }
 
+  // Desktop lang dropdown
   const _ls = document.getElementById('langSwitcher');
   const _lb = document.getElementById('langBtn');
   _lb.addEventListener('click', e => { e.stopPropagation(); _ls.classList.toggle('open'); });
   document.addEventListener('click', e => { if (!_ls.contains(e.target)) _ls.classList.remove('open'); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') _ls.classList.remove('open'); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { _ls.classList.remove('open'); closeMobMenu(); } });
   document.querySelectorAll('.lang-option').forEach(opt => {
     opt.addEventListener('click', () => { applyLang(opt.dataset.lang); _ls.classList.remove('open'); });
+  });
+
+  // Mobile lang pills
+  document.querySelectorAll('.mob-lang-pill').forEach(pill => {
+    pill.addEventListener('click', () => applyLang(pill.dataset.mobileLang));
+  });
+
+  // ── Burger / Mobile menu ─────────────────────────────────────────────────
+  const burger    = document.getElementById('burger');
+  const mobMenu   = document.getElementById('mobMenu');
+  const mobOverlay = document.getElementById('mobOverlay');
+  const mobClose  = document.getElementById('mobClose');
+
+  function openMobMenu() {
+    burger.classList.add('open');
+    burger.setAttribute('aria-expanded', 'true');
+    mobMenu.classList.add('open');
+    mobMenu.setAttribute('aria-hidden', 'false');
+    mobOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMobMenu() {
+    burger.classList.remove('open');
+    burger.setAttribute('aria-expanded', 'false');
+    mobMenu.classList.remove('open');
+    mobMenu.setAttribute('aria-hidden', 'true');
+    mobOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  burger.addEventListener('click', () => mobMenu.classList.contains('open') ? closeMobMenu() : openMobMenu());
+  mobClose.addEventListener('click', closeMobMenu);
+  mobOverlay.addEventListener('click', closeMobMenu);
+
+  // Close menu and scroll on mobile nav link click
+  document.querySelectorAll('.mob-nav a, .mob-cta, #mobBrand').forEach(a => {
+    a.addEventListener('click', () => {
+      closeMobMenu();
+    });
   });
 
   try {
