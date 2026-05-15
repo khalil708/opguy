@@ -1,0 +1,3127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PowerX One Wallet — The global super wallet for Web3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #07050f;
+    --void-2: #0d0a1f;
+    --void-3: #14102a;
+    --ink: #f4f0ff;
+    --ink-dim: #aea8c8;
+    --ink-mute: #6f6886;
+    --line: rgba(255,255,255,0.08);
+    --line-2: rgba(255,255,255,0.14);
+
+    --violet: oklch(65% 0.25 295);
+    --violet-soft: oklch(78% 0.18 295);
+    --blue: oklch(70% 0.22 250);
+    --magenta: oklch(70% 0.28 330);
+    --mint: oklch(80% 0.18 175);
+    --amber: oklch(80% 0.18 80);
+
+    --grad-1: linear-gradient(135deg, oklch(70% 0.28 330), oklch(65% 0.25 295) 45%, oklch(70% 0.22 250));
+    --grad-text: linear-gradient(110deg, #f4f0ff 0%, oklch(80% 0.20 295) 40%, oklch(80% 0.20 250) 70%, #f4f0ff);
+    --grad-violet: linear-gradient(135deg, oklch(65% 0.25 295), oklch(70% 0.22 250));
+    --grad-magenta: linear-gradient(135deg, oklch(70% 0.28 330), oklch(65% 0.25 295));
+
+    --glow-violet: 0 0 60px oklch(65% 0.25 295 / 0.45);
+    --glow-blue: 0 0 60px oklch(70% 0.22 250 / 0.45);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  html, body {
+    background: var(--void);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  body {
+    background:
+      radial-gradient(1200px 700px at 80% -10%, oklch(65% 0.25 295 / 0.18), transparent 60%),
+      radial-gradient(900px 600px at -10% 30%, oklch(70% 0.22 250 / 0.14), transparent 55%),
+      radial-gradient(800px 600px at 50% 100%, oklch(70% 0.28 330 / 0.10), transparent 60%),
+      var(--void);
+  }
+
+  ::selection { background: oklch(65% 0.25 295 / 0.4); color: white; }
+
+  /* ───── Global grid / noise overlays ───── */
+  .grid-bg {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+  .noise {
+    position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    opacity: 0.04; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  /* parallax orbs */
+  .orb {
+    position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+    filter: blur(60px);
+    will-change: transform;
+  }
+  .orb.violet { width: 520px; height: 520px; background: oklch(65% 0.25 295 / 0.45); top: 8vh; right: -10vw; }
+  .orb.blue   { width: 460px; height: 460px; background: oklch(70% 0.22 250 / 0.40); top: 80vh; left: -8vw; }
+  .orb.magenta{ width: 380px; height: 380px; background: oklch(70% 0.28 330 / 0.30); top: 200vh; right: -6vw; }
+  .orb.mint   { width: 360px; height: 360px; background: oklch(80% 0.18 175 / 0.18); top: 320vh; left: -8vw; }
+
+  /* ───── Scroll progress bar ───── */
+  .progress {
+    position: fixed; top: 0; left: 0; height: 2px;
+    background: var(--grad-1);
+    z-index: 100;
+    width: 0%;
+    box-shadow: 0 0 12px oklch(65% 0.25 295 / 0.6);
+  }
+
+  /* ───── Nav ───── */
+  nav.top {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 50;
+    padding: 18px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: padding .3s, background .3s, backdrop-filter .3s;
+  }
+  nav.top.scrolled {
+    padding: 12px 40px;
+    background: rgba(7, 5, 15, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+    text-decoration: none; color: var(--ink);
+  }
+  .brand .mark {
+    width: 36px; height: 36px;
+    background: var(--grad-violet);
+    border-radius: 10px;
+    display: grid; place-items: center;
+    box-shadow: var(--glow-violet);
+    position: relative;
+  }
+  .brand .mark svg { width: 20px; height: 20px; }
+  .brand .name {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 17px;
+    letter-spacing: -0.3px;
+  }
+  .brand .name span { font-weight: 500; opacity: 0.75; }
+
+  .nav-links {
+    display: flex; gap: 6px; align-items: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px;
+    backdrop-filter: blur(12px);
+  }
+  .nav-links a {
+    padding: 8px 16px;
+    font-size: 13px; color: var(--ink-dim); text-decoration: none;
+    border-radius: 999px;
+    transition: color .2s, background .2s;
+  }
+  .nav-links a:hover { color: var(--ink); background: rgba(255,255,255,0.05); }
+
+  .nav-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px;
+    background: var(--grad-violet);
+    color: white;
+    text-decoration: none;
+    font-size: 13px; font-weight: 600;
+    border-radius: 999px;
+    box-shadow: var(--glow-violet);
+    transition: transform .2s, box-shadow .2s;
+    position: relative; overflow: hidden;
+  }
+  .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 0 80px oklch(65% 0.25 295 / 0.7); }
+  .nav-cta .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: white; box-shadow: 0 0 8px white;
+    animation: pulse 1.6s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+
+  /* ───── Sections ───── */
+  section {
+    position: relative;
+    z-index: 2;
+    padding: 120px 40px;
+  }
+  .container { max-width: 1280px; margin: 0 auto; position: relative; }
+
+  /* Section eyebrow */
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--violet-soft); font-weight: 500;
+    padding: 6px 14px;
+    border: 1px solid oklch(65% 0.25 295 / 0.3);
+    border-radius: 999px;
+    background: oklch(65% 0.25 295 / 0.06);
+    margin-bottom: 24px;
+  }
+  .eyebrow .blip {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--violet-soft);
+    box-shadow: 0 0 8px var(--violet-soft);
+  }
+
+  h1, h2, h3 { font-family: 'Syne', sans-serif; letter-spacing: -0.02em; line-height: 1.05; }
+
+  .section-title {
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+  .section-sub {
+    font-size: 18px; color: var(--ink-dim); line-height: 1.55;
+    max-width: 640px;
+  }
+
+  .grad-text {
+    background: var(--grad-text);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .grad-violet-text {
+    background: linear-gradient(110deg, oklch(75% 0.20 295), oklch(78% 0.20 250));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .grad-magenta-text {
+    background: linear-gradient(110deg, oklch(78% 0.22 330), oklch(75% 0.20 295));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ───── Hero ───── */
+  .hero {
+    min-height: 100vh;
+    padding-top: 140px;
+    padding-bottom: 60px;
+    display: flex; align-items: center;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 60px;
+    align-items: center;
+    width: 100%;
+  }
+  .hero h1 {
+    font-size: clamp(48px, 7vw, 96px);
+    font-weight: 700;
+    line-height: 0.98;
+    margin-bottom: 28px;
+  }
+  .hero h1 .stack { display: block; }
+  .hero p.lead {
+    font-size: 19px; color: var(--ink-dim); line-height: 1.55;
+    max-width: 540px; margin-bottom: 36px;
+  }
+  .hero-ctas {
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+  }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 18px 28px;
+    background: var(--grad-violet);
+    color: white;
+    text-decoration: none;
+    font-size: 15px; font-weight: 600;
+    border-radius: 14px;
+    box-shadow: var(--glow-violet);
+    transition: transform .25s, box-shadow .25s;
+    position: relative; overflow: hidden;
+  }
+  .btn-primary::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform .8s;
+  }
+  .btn-primary:hover::before { transform: translateX(100%); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 80px oklch(65% 0.25 295 / 0.6); }
+  .btn-primary svg { transition: transform .25s; }
+  .btn-primary:hover svg { transform: translateX(4px); }
+
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 18px 24px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line-2);
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 15px; font-weight: 500;
+    border-radius: 14px;
+    transition: background .2s, border-color .2s;
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.08); border-color: oklch(65% 0.25 295 / 0.6); }
+
+  .hero-stats {
+    display: flex; gap: 36px;
+    margin-top: 48px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .hero-stats .stat .v {
+    font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700;
+    background: var(--grad-text);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .hero-stats .stat .l {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 1.8px; text-transform: uppercase;
+    color: var(--ink-mute); margin-top: 4px;
+  }
+
+  /* Hero visual stack */
+  .hero-visual {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    display: grid; place-items: center;
+  }
+  .hero-rings {
+    position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
+  }
+  .ring {
+    position: absolute; border-radius: 50%;
+    border: 1px solid;
+    animation: ring-spin 30s linear infinite;
+  }
+  .ring.r1 { width: 110%; height: 110%; border-color: oklch(65% 0.25 295 / 0.25); border-style: dashed; }
+  .ring.r2 { width: 85%; height: 85%; border-color: oklch(70% 0.22 250 / 0.3); animation-direction: reverse; animation-duration: 22s; }
+  .ring.r3 { width: 65%; height: 65%; border-color: oklch(70% 0.28 330 / 0.25); animation-duration: 16s; }
+  @keyframes ring-spin { to { transform: rotate(360deg); } }
+
+  .ring .ring-dot {
+    position: absolute; width: 10px; height: 10px;
+    border-radius: 50%;
+    top: -5px; left: 50%;
+    box-shadow: 0 0 16px currentColor;
+  }
+  .ring.r1 .ring-dot { background: oklch(65% 0.25 295); color: oklch(65% 0.25 295); }
+  .ring.r2 .ring-dot { background: oklch(70% 0.22 250); color: oklch(70% 0.22 250); }
+  .ring.r3 .ring-dot { background: oklch(70% 0.28 330); color: oklch(70% 0.28 330); }
+
+  .phone {
+    position: relative;
+    width: 290px; height: 600px;
+    background: linear-gradient(180deg, #1c1633, #0d0a1f);
+    border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 42px;
+    padding: 8px;
+    box-shadow:
+      0 60px 120px rgba(0,0,0,0.6),
+      0 0 80px oklch(65% 0.25 295 / 0.35),
+      inset 0 0 0 1px rgba(255,255,255,0.04);
+    z-index: 2;
+  }
+  .phone-screen {
+    width: 100%; height: 100%;
+    background: #000;
+    border-radius: 36px;
+    overflow: hidden;
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+
+  /* App header */
+  .app-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 14px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .app-head .left { display: flex; align-items: center; gap: 8px; }
+  .app-head .logo {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: linear-gradient(135deg, oklch(78% 0.18 295), oklch(68% 0.22 295));
+    display: grid; place-items: center;
+    box-shadow: 0 0 14px oklch(65% 0.25 295 / 0.5);
+  }
+  .app-head .logo svg { width: 14px; height: 14px; }
+  .app-head .name {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px;
+    letter-spacing: -0.3px;
+  }
+  .app-head .right { display: flex; align-items: center; gap: 10px; }
+  .app-head .balance {
+    text-align: right;
+  }
+  .app-head .balance .l {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px; letter-spacing: 1.4px; color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+  .app-head .balance .v {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
+    color: oklch(80% 0.18 250);
+  }
+  .app-head .av {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1.5px solid oklch(70% 0.22 250);
+    background: radial-gradient(ellipse at 50% 30%, #c8d8ff 0%, #7080e8 35%, #2030a0 70%, #080c38 100%);
+  }
+
+  /* Trending */
+  .trending {
+    padding: 14px 14px 10px;
+  }
+  .trending-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .trending-head .t {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px;
+  }
+  .trending-head .more {
+    font-family: 'JetBrains Mono', monospace; font-size: 8px;
+    letter-spacing: 1.2px; color: oklch(80% 0.18 250);
+  }
+  .trending-row {
+    display: flex; gap: 10px; overflow: hidden;
+  }
+  .creator-mini { flex-shrink: 0; width: 40px; text-align: center; }
+  .creator-mini .av {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1.5px solid;
+    margin-bottom: 4px;
+  }
+  .creator-mini .av.c1 { border-color: oklch(75% 0.22 330); background: radial-gradient(ellipse at 50% 30%, #f9c8d8 0%, #e8788a 35%, #8a1a3a 70%, #3a0818 100%); }
+  .creator-mini .av.c2 { border-color: oklch(72% 0.20 258); background: radial-gradient(ellipse at 50% 30%, #c8d8ff 0%, #7890f8 35%, #2030a0 70%, #080c38 100%); }
+  .creator-mini .av.c3 { border-color: oklch(74% 0.14 60);  background: radial-gradient(ellipse at 50% 30%, #f8d8b0 0%, #d09060 35%, #7a4018 70%, #281008 100%); }
+  .creator-mini .av.c4 { border-color: oklch(72% 0.16 210); background: radial-gradient(ellipse at 50% 30%, #b0d8f0 0%, #5090c8 35%, #103858 70%, #05101c 100%); }
+  .creator-mini .av.c5 { border-color: oklch(74% 0.14 80);  background: radial-gradient(ellipse at 50% 30%, #f8e0b0 0%, #d0a050 35%, #784810 70%, #281408 100%); }
+  .creator-mini .h {
+    font-size: 7px; color: var(--ink-dim);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* Big post */
+  .post-card {
+    margin: 6px 12px 10px;
+    background: #0a0a14;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    overflow: hidden;
+    flex: 1;
+    display: flex; flex-direction: column;
+  }
+  .post-card .meta {
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .post-card .meta .av {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1.5px solid oklch(70% 0.25 295);
+    background: radial-gradient(ellipse at 50% 30%, #f8d8c8 0%, #e09070 35%, #8a3818 70%, #280c08 100%);
+  }
+  .post-card .meta .h {
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .post-card .meta .h .verified {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: oklch(70% 0.22 250);
+    display: inline-grid; place-items: center;
+    font-size: 7px; color: white;
+  }
+  .post-card .meta .sub { font-size: 8px; color: var(--ink-mute); }
+  .post-card .meta .dots { margin-left: auto; color: var(--ink-mute); font-size: 14px; letter-spacing: 1px; }
+  .post-card .img {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 180px;
+    background: #0d0820;
+  }
+  .post-card .img svg.scene { display: block; width: 100%; height: 100%; position: absolute; inset: 0; }
+  .post-card .play {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    border: 1.5px solid rgba(255,255,255,0.4);
+    backdrop-filter: blur(8px);
+    display: grid; place-items: center;
+    z-index: 2;
+  }
+  .post-card .play svg { width: 16px; height: 16px; margin-left: 2px; }
+  .post-card .badge {
+    position: absolute; bottom: 10px; left: 10px;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.15);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px; letter-spacing: 1.2px; font-weight: 700;
+    color: white;
+    z-index: 2;
+  }
+  .post-card .badge .b {
+    width: 12px; height: 12px; border-radius: 3px;
+    background: linear-gradient(135deg, oklch(78% 0.18 295), oklch(68% 0.22 295));
+    display: grid; place-items: center;
+  }
+  .post-card .badge svg { width: 7px; height: 7px; }
+
+  .post-card .acts {
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .post-card .acts .ic {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px; font-weight: 600;
+    color: var(--ink);
+  }
+  .post-card .acts .heart svg { color: oklch(70% 0.28 30); }
+  .post-card .acts .buy {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, oklch(85% 0.10 250), oklch(80% 0.16 250));
+    color: #0a0a14;
+    border-radius: 999px;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.5px;
+  }
+  .post-card .acts .buy svg { width: 10px; height: 10px; }
+
+  /* Bottom nav */
+  .bnav {
+    margin-top: auto;
+    padding: 10px 8px 12px;
+    background: rgba(0,0,0,0.5);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    align-items: center;
+    position: relative;
+  }
+  .bnav .item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    color: var(--ink-mute);
+    font-size: 8px; font-weight: 500;
+  }
+  .bnav .item svg { width: 16px; height: 16px; }
+  .bnav .item.active { color: var(--ink); }
+  .bnav .add {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, oklch(85% 0.10 200), oklch(80% 0.18 250));
+    display: grid; place-items: center;
+    color: #0a0a14;
+    margin: -16px auto 0;
+    box-shadow: 0 0 20px oklch(80% 0.18 250 / 0.5);
+  }
+  .bnav .add svg { width: 20px; height: 20px; stroke: #0a0a14; stroke-width: 2.5; }
+
+  /* Wallet card overlay (floats) */
+  .wallet-float {
+    position: absolute;
+    right: -40px; top: 80px;
+    width: 220px;
+    background: linear-gradient(160deg, rgba(20,15,42,0.95), rgba(13,10,31,0.95));
+    border: 1px solid oklch(70% 0.22 250 / 0.35);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 40px oklch(70% 0.22 250 / 0.25);
+    backdrop-filter: blur(12px);
+    z-index: 3;
+    transform: translateY(0px);
+    animation: float 6s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .wallet-float h4 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--ink-mute); margin-bottom: 8px;
+  }
+  .wallet-float .price {
+    font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800;
+    background: var(--grad-text);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 12px;
+  }
+  .wallet-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--line);
+    font-size: 11px;
+  }
+  .wallet-row .tk { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+  .wallet-row .tk .ic {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 10px; font-weight: 700;
+  }
+  .wallet-row .tk .ic.pwx { background: var(--grad-violet); color: white; }
+  .wallet-row .tk .ic.eth { background: linear-gradient(135deg, #627eea, #4055b8); color: white; }
+  .wallet-row .tk .ic.usdc { background: linear-gradient(135deg, oklch(80% 0.18 175), oklch(70% 0.22 250)); color: #06031a; }
+  .wallet-row .amt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 600;
+  }
+
+  /* Coin float */
+  .coin-float {
+    position: absolute;
+    left: -60px; bottom: 100px;
+    width: 130px; height: 130px;
+    z-index: 3;
+    animation: float-rev 7s ease-in-out infinite;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5));
+  }
+  @keyframes float-rev {
+    0%, 100% { transform: translateY(0) rotate(-6deg); }
+    50% { transform: translateY(-12px) rotate(-2deg); }
+  }
+
+  /* Founders chip floating */
+  .founders-chip {
+    position: absolute;
+    left: -30px; top: 30px;
+    background: linear-gradient(160deg, rgba(20,15,42,0.95), rgba(13,10,31,0.95));
+    border: 1px solid oklch(65% 0.25 295 / 0.5);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 30px oklch(65% 0.25 295 / 0.3);
+    backdrop-filter: blur(12px);
+    z-index: 3;
+    animation: float 8s ease-in-out infinite;
+  }
+  .founders-chip .ic {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: var(--grad-violet);
+    display: grid; place-items: center;
+    box-shadow: var(--glow-violet);
+  }
+  .founders-chip .txt .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px; letter-spacing: 1.6px;
+    color: var(--ink-mute);
+  }
+  .founders-chip .txt .v {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    color: var(--ink);
+  }
+
+  /* ───── Marquee ticker ───── */
+  .ticker {
+    overflow: hidden;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    background: rgba(255,255,255,0.02);
+    padding: 18px 0;
+    margin: 0;
+    z-index: 2; position: relative;
+  }
+  .ticker-track {
+    display: flex; gap: 60px;
+    width: max-content;
+    animation: ticker 40s linear infinite;
+    font-family: 'Syne', sans-serif;
+    font-size: 26px; font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .ticker-track span {
+    display: inline-flex; align-items: center; gap: 16px;
+    color: var(--ink);
+  }
+  .ticker-track span.dim { color: var(--ink-mute); }
+  .ticker-track .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--grad-violet);
+    box-shadow: 0 0 12px oklch(65% 0.25 295 / 0.6);
+  }
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ───── Problem / Solution ───── */
+  .ps-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    margin-top: 60px;
+  }
+  .ps-card {
+    border-radius: 24px;
+    padding: 36px;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    position: relative;
+    overflow: hidden;
+    transition: transform .4s cubic-bezier(.2,.7,.2,1), border-color .4s;
+  }
+  .ps-card:hover { transform: translateY(-6px); }
+  .ps-card.problem { border-color: oklch(70% 0.28 330 / 0.3); }
+  .ps-card.problem:hover { border-color: oklch(70% 0.28 330 / 0.6); }
+  .ps-card.solution {
+    border-color: oklch(65% 0.25 295 / 0.4);
+    background:
+      radial-gradient(800px 300px at 100% 0%, oklch(65% 0.25 295 / 0.18), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  }
+  .ps-card.solution:hover { border-color: oklch(65% 0.25 295 / 0.7); }
+  .ps-card .mini-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: oklch(70% 0.28 330);
+    font-weight: 600; margin-bottom: 20px;
+  }
+  .ps-card.solution .mini-eyebrow { color: var(--violet-soft); }
+  .ps-card .mini-eyebrow .ic {
+    width: 22px; height: 22px; border-radius: 8px;
+    border: 1px solid currentColor;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 12px;
+  }
+  .ps-card h2 {
+    font-size: 32px; font-weight: 700;
+    margin-bottom: 24px;
+    line-height: 1.1;
+  }
+  .ps-list {
+    list-style: none;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .ps-list li {
+    display: flex; align-items: flex-start; gap: 12px;
+    font-size: 15px; color: var(--ink-dim); line-height: 1.45;
+  }
+  .ps-list li .check {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    display: grid; place-items: center;
+    margin-top: 2px;
+    font-size: 11px; font-weight: 700;
+  }
+  .ps-card.problem .check {
+    background: oklch(70% 0.28 330 / 0.15);
+    color: oklch(75% 0.25 330);
+    border: 1px solid oklch(70% 0.28 330 / 0.3);
+  }
+  .ps-card.solution .check {
+    background: oklch(65% 0.25 295 / 0.18);
+    color: var(--violet-soft);
+    border: 1px solid oklch(65% 0.25 295 / 0.4);
+  }
+
+  /* ───── Pillars ───── */
+  .pillars-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 60px; margin-bottom: 60px;
+  }
+  .pillars-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+  }
+  .pillar {
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 28px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: transform .4s cubic-bezier(.2,.7,.2,1), border-color .4s;
+    min-height: 380px;
+    display: flex; flex-direction: column;
+  }
+  .pillar::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 0%, var(--accent), transparent 60%);
+    opacity: 0; transition: opacity .4s;
+  }
+  .pillar:hover { transform: translateY(-8px); border-color: var(--accent-line); }
+  .pillar:hover::before { opacity: 0.18; }
+  .pillar > * { position: relative; z-index: 1; }
+  .pillar.p1 { --accent: oklch(65% 0.25 295 / 0.4); --accent-line: oklch(65% 0.25 295 / 0.6); }
+  .pillar.p2 { --accent: oklch(70% 0.22 250 / 0.4); --accent-line: oklch(70% 0.22 250 / 0.6); }
+  .pillar.p3 { --accent: oklch(70% 0.28 330 / 0.4); --accent-line: oklch(70% 0.28 330 / 0.6); }
+  .pillar.p4 { --accent: oklch(80% 0.18 175 / 0.4); --accent-line: oklch(80% 0.18 175 / 0.6); }
+
+  .pillar .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+    color: var(--ink-mute);
+    margin-bottom: 18px;
+  }
+  .pillar .icon-box {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display: grid; place-items: center;
+    margin-bottom: 22px;
+    border: 1px solid;
+  }
+  .pillar.p1 .icon-box { background: oklch(65% 0.25 295 / 0.15); border-color: oklch(65% 0.25 295 / 0.4); color: var(--violet-soft); }
+  .pillar.p2 .icon-box { background: oklch(70% 0.22 250 / 0.15); border-color: oklch(70% 0.22 250 / 0.4); color: oklch(80% 0.20 250); }
+  .pillar.p3 .icon-box { background: oklch(70% 0.28 330 / 0.15); border-color: oklch(70% 0.28 330 / 0.4); color: oklch(80% 0.22 330); }
+  .pillar.p4 .icon-box { background: oklch(80% 0.18 175 / 0.15); border-color: oklch(80% 0.18 175 / 0.4); color: var(--mint); }
+
+  .pillar h3 {
+    font-size: 22px; font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .pillar p {
+    font-size: 14px; color: var(--ink-dim); line-height: 1.5;
+    margin-bottom: 20px;
+  }
+  .pillar ul {
+    list-style: none;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line-2);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .pillar ul li {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .pillar ul li::before {
+    content: ''; width: 4px; height: 4px; border-radius: 50%;
+    background: currentColor;
+    opacity: 0.6;
+  }
+
+  /* ───── Creator + Business split ───── */
+  .split {
+    display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px;
+    margin-top: 60px;
+    align-items: stretch;
+  }
+  .creator-card {
+    border-radius: 24px;
+    padding: 40px;
+    background:
+      radial-gradient(600px 300px at 100% 100%, oklch(70% 0.28 330 / 0.2), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid oklch(70% 0.28 330 / 0.3);
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .creator-card h3 {
+    font-size: 32px; font-weight: 700; margin-bottom: 24px;
+  }
+  .creator-list {
+    list-style: none;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px 20px;
+    margin-top: auto;
+  }
+  .creator-list li {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 13px; color: var(--ink-dim); line-height: 1.4;
+  }
+  .creator-list li .ck {
+    flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%;
+    background: oklch(70% 0.28 330 / 0.18);
+    border: 1px solid oklch(70% 0.28 330 / 0.4);
+    color: oklch(80% 0.22 330);
+    display: grid; place-items: center;
+    font-size: 9px; font-weight: 700;
+    margin-top: 2px;
+  }
+
+  .creator-stats {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    margin-bottom: 28px;
+  }
+  .creator-stat {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .creator-stat .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--ink-mute); margin-bottom: 8px;
+  }
+  .creator-stat .v {
+    font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800;
+    background: var(--grad-text);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  /* Business model / revenue */
+  .biz-card {
+    border-radius: 24px;
+    padding: 40px;
+    background:
+      radial-gradient(500px 300px at 0% 0%, oklch(70% 0.22 250 / 0.18), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid oklch(70% 0.22 250 / 0.3);
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .biz-card h3 {
+    font-size: 32px; font-weight: 700; margin-bottom: 8px;
+  }
+  .biz-list {
+    list-style: none;
+    display: flex; flex-direction: column; gap: 0;
+  }
+  .biz-list li {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+    transition: padding-left .3s;
+  }
+  .biz-list li:last-child { border-bottom: none; }
+  .biz-list li:hover { padding-left: 8px; }
+  .biz-list li .num {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+    background: oklch(70% 0.22 250 / 0.15);
+    border: 1px solid oklch(70% 0.22 250 / 0.4);
+    color: oklch(80% 0.20 250);
+    display: grid; place-items: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+  }
+  .biz-list li .txt {
+    font-size: 14px; color: var(--ink-dim);
+  }
+  .biz-list li .txt strong { color: var(--ink); font-weight: 600; }
+
+  /* ───── Founders Round (pricing) ───── */
+  .round-wrap {
+    margin-top: 60px;
+    display: grid; grid-template-columns: 1fr 1.1fr;
+    gap: 30px;
+  }
+  .round-info {
+    background:
+      radial-gradient(600px 400px at 50% 0%, oklch(65% 0.25 295 / 0.2), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid oklch(65% 0.25 295 / 0.4);
+    border-radius: 24px;
+    padding: 40px;
+    position: relative; overflow: hidden;
+  }
+  .round-info::before {
+    content: '';
+    position: absolute; top: -2px; left: 0; right: 0; height: 2px;
+    background: var(--grad-1);
+  }
+  .round-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    margin-bottom: 30px;
+  }
+  .round-cell .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--ink-mute); margin-bottom: 8px;
+  }
+  .round-cell .v {
+    font-family: 'Syne', sans-serif; font-size: 38px; font-weight: 800;
+    line-height: 1;
+  }
+  .round-cell .v.grad {
+    background: var(--grad-text);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .round-cell .sub {
+    font-size: 12px; color: var(--ink-mute); margin-top: 6px;
+  }
+
+  /* Returns chart */
+  .sim-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid var(--line-2);
+    border-radius: 24px;
+    padding: 40px;
+    display: flex; flex-direction: column;
+  }
+  .sim-head { margin-bottom: 28px; }
+  .sim-head h3 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .sim-head p { font-size: 13px; color: var(--ink-dim); }
+  .sim-chart {
+    height: 240px;
+    position: relative;
+    display: flex; align-items: flex-end; gap: 18px;
+    padding: 10px 0 30px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 24px;
+  }
+  .sim-chart .gridline {
+    position: absolute; left: 0; right: 0;
+    border-top: 1px dashed var(--line);
+    pointer-events: none;
+  }
+  .sim-bar {
+    flex: 1;
+    display: flex; flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    position: relative;
+  }
+  .sim-bar .fill {
+    width: 100%;
+    border-radius: 12px 12px 0 0;
+    position: relative;
+    transition: height 1.4s cubic-bezier(.2,.7,.2,1);
+    height: 0;
+  }
+  .sim-bar.b1 .fill { background: linear-gradient(180deg, oklch(70% 0.10 295), oklch(50% 0.10 295)); }
+  .sim-bar.b2 .fill { background: linear-gradient(180deg, oklch(70% 0.22 250), oklch(50% 0.22 250)); }
+  .sim-bar.b3 .fill { background: var(--grad-1); box-shadow: 0 0 40px oklch(65% 0.25 295 / 0.5); }
+  .sim-bar .top-amt {
+    position: absolute; top: -32px;
+    left: 50%; transform: translateX(-50%);
+    font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800;
+    white-space: nowrap;
+  }
+  .sim-bar .top-mult {
+    position: absolute; top: -10px; right: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 700;
+    color: white;
+    background: rgba(0,0,0,0.35);
+    padding: 2px 8px; border-radius: 6px;
+  }
+  .sim-bar .bot-lbl {
+    position: absolute; bottom: -28px;
+    left: 0; right: 0; text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--ink-mute);
+    letter-spacing: 1px;
+  }
+  .sim-bar .bot-lbl strong { color: var(--ink); font-weight: 600; }
+
+  .sim-foot {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 16px; margin-top: auto; padding-top: 20px;
+  }
+  .sim-foot .item .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--ink-mute); margin-bottom: 6px;
+  }
+  .sim-foot .item .v {
+    font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700;
+  }
+  .sim-foot .item .v.grad {
+    background: var(--grad-text);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  /* ───── Impact ───── */
+  .impact {
+    margin-top: 60px;
+    display: grid; grid-template-columns: 1fr 1.4fr;
+    gap: 30px;
+    align-items: stretch;
+  }
+  .impact-pct {
+    background:
+      radial-gradient(circle at 50% 30%, oklch(80% 0.18 175 / 0.25), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid oklch(80% 0.18 175 / 0.4);
+    border-radius: 24px;
+    padding: 40px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .impact-pct .big {
+    font-family: 'Syne', sans-serif; font-size: 140px; font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, oklch(85% 0.18 175), oklch(75% 0.22 250));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 8px;
+  }
+  .impact-pct .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--mint);
+  }
+  .impact-text {
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 40px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .impact-text h3 {
+    font-size: 36px; font-weight: 700; margin-bottom: 18px;
+  }
+  .impact-text p {
+    font-size: 17px; color: var(--ink-dim); line-height: 1.55;
+    margin-bottom: 22px;
+    max-width: 540px;
+  }
+  .impact-text .pillars-mini {
+    display: flex; gap: 24px; padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .impact-text .pillars-mini .item .v {
+    font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700;
+  }
+  .impact-text .pillars-mini .item .l {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--ink-mute); margin-top: 4px;
+  }
+
+  /* ───── Final CTA ───── */
+  .cta {
+    text-align: center;
+    padding: 160px 40px;
+    position: relative; overflow: hidden;
+  }
+  .cta::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(800px 500px at 50% 50%, oklch(65% 0.25 295 / 0.25), transparent 60%);
+    pointer-events: none;
+  }
+  .cta .container { position: relative; z-index: 1; }
+  .cta h2 {
+    font-size: clamp(44px, 7vw, 88px);
+    font-weight: 700;
+    margin-bottom: 28px;
+    line-height: 0.98;
+  }
+  .cta p {
+    font-size: 18px; color: var(--ink-dim); line-height: 1.55;
+    max-width: 620px; margin: 0 auto 44px;
+  }
+  .cta-buttons {
+    display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+  }
+  .cta-stats {
+    margin-top: 80px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+    padding-top: 60px;
+    border-top: 1px solid var(--line);
+  }
+  .cta-stats .item .v {
+    font-family: 'Syne', sans-serif; font-size: 38px; font-weight: 800;
+    background: var(--grad-text);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .cta-stats .item .l {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 1.8px; text-transform: uppercase;
+    color: var(--ink-mute); margin-top: 6px;
+  }
+
+  /* ───── Footer ───── */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 60px 40px 40px;
+    background: rgba(0,0,0,0.2);
+    position: relative; z-index: 2;
+  }
+  .footer-grid {
+    max-width: 1280px; margin: 0 auto;
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 40px;
+  }
+  .footer .brand-blob p {
+    color: var(--ink-mute); font-size: 13px; max-width: 320px;
+    margin-top: 12px; line-height: 1.55;
+  }
+  footer h5 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--ink-mute); margin-bottom: 16px;
+  }
+  footer ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  footer ul li a {
+    color: var(--ink-dim); font-size: 13px; text-decoration: none;
+    transition: color .2s;
+  }
+  footer ul li a:hover { color: var(--ink); }
+  .copy-row {
+    max-width: 1280px; margin: 50px auto 0;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 1.5px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+
+  /* ───── Reveal animations ───── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1);
+  }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+  .reveal.delay-1 { transition-delay: .08s; }
+  .reveal.delay-2 { transition-delay: .16s; }
+  .reveal.delay-3 { transition-delay: .24s; }
+  .reveal.delay-4 { transition-delay: .32s; }
+  .reveal.delay-5 { transition-delay: .40s; }
+
+  .reveal-x {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1);
+  }
+  .reveal-x.in { opacity: 1; transform: translateX(0); }
+
+  .reveal-scale {
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1);
+  }
+  .reveal-scale.in { opacity: 1; transform: scale(1); }
+
+  /* Hero entrance */
+  .hero-fade {
+    opacity: 0; transform: translateY(20px);
+    animation: fadeInUp .9s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  .hero-fade.d1 { animation-delay: .15s; }
+  .hero-fade.d2 { animation-delay: .3s; }
+  .hero-fade.d3 { animation-delay: .45s; }
+  .hero-fade.d4 { animation-delay: .6s; }
+  .hero-fade.d5 { animation-delay: .75s; }
+  @keyframes fadeInUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Spotlight cursor */
+  .spotlight {
+    position: fixed; width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, oklch(65% 0.25 295 / 0.10), transparent 60%);
+    pointer-events: none;
+    z-index: 1;
+    transform: translate(-50%, -50%);
+    transition: transform .3s ease-out;
+    mix-blend-mode: screen;
+  }
+
+  /* ───── Interactive Simulator ───── */
+  .sim-input { padding: 18px 22px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 22px; }
+  .sim-input-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+  .sim-input-row .lbl { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-mute); }
+  .sim-input-row .amt { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; background: var(--grad-text); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  input[type=range].sim-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: linear-gradient(90deg, oklch(65% 0.25 295), oklch(70% 0.22 250)) no-repeat; background-size: var(--p, 0%) 100%; background-color: rgba(255,255,255,0.08); border-radius: 6px; outline: none; }
+  .sim-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; background: white; border: 3px solid oklch(65% 0.25 295); box-shadow: 0 0 16px oklch(65% 0.25 295 / 0.7); cursor: pointer; }
+  .sim-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: white; border: 3px solid oklch(65% 0.25 295); box-shadow: 0 0 16px oklch(65% 0.25 295 / 0.7); cursor: pointer; }
+  .sim-input-ticks { display: flex; justify-content: space-between; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-mute); letter-spacing: 1px; }
+  .sim-bars { display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; }
+  .sim-row { display: grid; grid-template-columns: 180px 1fr 130px; gap: 16px; align-items: center; }
+  .sim-row-l { font-size: 12px; color: var(--ink-dim); }
+  .sim-row-l strong { color: var(--ink); font-weight: 600; font-family: 'JetBrains Mono', monospace; font-size: 10px; display: block; margin-top: 2px; opacity: 0.7; }
+  .sim-row-bar { height: 10px; background: rgba(255,255,255,0.04); border-radius: 5px; overflow: hidden; position: relative; }
+  .sim-row-bar .b { height: 100%; border-radius: 5px; transition: width .5s cubic-bezier(.2,.7,.2,1); width: 0; }
+  .b-tok { background: linear-gradient(90deg, oklch(60% 0.10 295), oklch(75% 0.18 295)); }
+  .b-r2 { background: linear-gradient(90deg, oklch(60% 0.18 250), oklch(78% 0.22 250)); }
+  .b-ann { background: linear-gradient(90deg, oklch(60% 0.18 175), oklch(80% 0.18 175)); }
+  .b-tot { background: var(--grad-1); box-shadow: 0 0 16px oklch(65% 0.25 295 / 0.5); }
+  .sim-row-r { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; text-align: right; white-space: nowrap; }
+  .sim-row.total { padding-top: 14px; border-top: 1px dashed var(--line-2); }
+  .sim-row.total .sim-row-r { background: var(--grad-text); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 22px; }
+  .sim-row.total .sim-row-l { font-weight: 600; color: var(--ink); font-size: 13px; }
+  .sim-mult-row { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 18px; border-top: 1px solid var(--line); }
+  .mult-pill { padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,0.05); border: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--ink); }
+  .mult-pill.grad { background: var(--grad-1); border-color: transparent; color: white; box-shadow: 0 0 20px oklch(65% 0.25 295 / 0.4); }
+
+  /* ───── Tokenomics ───── */
+  .tok-grid { margin-top: 60px; display: grid; grid-template-columns: 1fr 1.1fr; gap: 50px; align-items: center; }
+  .tok-donut-wrap {
+    aspect-ratio: 1/1; max-width: 460px; margin: 0 auto;
+    position: relative;
+    display: grid; place-items: center;
+  }
+  .tok-donut-wrap::before {
+    content: ''; position: absolute; inset: 18%;
+    background: radial-gradient(circle, oklch(65% 0.25 295 / 0.25), transparent 70%);
+    filter: blur(30px); border-radius: 50%;
+  }
+  .tok-donut { width: 100%; height: 100%; transform: rotate(-90deg); position: relative; z-index: 1; }
+  .tok-donut circle.track { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 22; }
+  .tok-donut circle.seg {
+    fill: none; stroke-width: 22; stroke-linecap: butt;
+    stroke-dasharray: 0 1000;
+    transition: stroke-dasharray 1.6s cubic-bezier(.2,.7,.2,1);
+  }
+  .tok-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    z-index: 2;
+  }
+  .tok-center .lbl { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--ink-mute); text-transform: uppercase; }
+  .tok-center .v { font-family: 'Syne', sans-serif; font-size: 56px; font-weight: 800; background: var(--grad-text); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; margin: 4px 0; }
+  .tok-center .sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px; color: var(--ink-mute); text-transform: uppercase; }
+
+  .tok-legend { display: flex; flex-direction: column; gap: 12px; }
+  .tok-row {
+    display: grid; grid-template-columns: 16px 1fr auto;
+    gap: 14px; align-items: center;
+    padding: 14px 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    transition: transform .3s, border-color .3s;
+  }
+  .tok-row:hover { transform: translateX(4px); border-color: var(--line-2); }
+  .tok-row .swatch { width: 14px; height: 14px; border-radius: 4px; box-shadow: 0 0 8px currentColor; }
+  .tok-row .body .name { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .tok-row .body .desc { font-size: 11px; color: var(--ink-mute); margin-top: 2px; }
+  .tok-row .pct { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; }
+
+  /* ───── Use of Funds ───── */
+  .uof {
+    margin-top: 30px;
+    padding: 28px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    border: 1px solid var(--line);
+    border-radius: 20px;
+  }
+  .uof-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; flex-wrap: wrap; gap: 10px; }
+  .uof-head h3 { font-size: 22px; font-weight: 700; }
+  .uof-head .sub { font-size: 13px; color: var(--ink-dim); }
+  .uof-bar { display: flex; height: 56px; border-radius: 12px; overflow: hidden; gap: 3px; }
+  .uof-seg {
+    display: flex; flex-direction: column; justify-content: center; padding: 0 16px;
+    color: white; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600;
+    letter-spacing: 1.2px; text-transform: uppercase;
+    transition: width 1.2s cubic-bezier(.2,.7,.2,1);
+    width: 0;
+  }
+  .uof-seg .pct { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: 0; }
+  .uof-seg.tech { background: linear-gradient(135deg, oklch(70% 0.18 175), oklch(60% 0.18 175)); }
+  .uof-seg.mkt { background: linear-gradient(135deg, oklch(70% 0.22 250), oklch(60% 0.22 250)); }
+  .uof-seg.liq { background: var(--grad-1); }
+  .uof-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 18px; }
+  .uof-card {
+    padding: 18px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  .uof-card .top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .uof-card .dot { width: 10px; height: 10px; border-radius: 3px; }
+  .uof-card .lbl { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink); font-weight: 600; }
+  .uof-card .pct { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .uof-card .desc { font-size: 12px; color: var(--ink-dim); line-height: 1.4; }
+  .uof-card.tech .pct, .uof-card.tech .dot { background: linear-gradient(135deg, oklch(70% 0.18 175), oklch(60% 0.18 175)); -webkit-background-clip: text; background-clip: text; }
+  .uof-card.tech .pct { -webkit-text-fill-color: transparent; }
+  .uof-card.tech .dot { -webkit-text-fill-color: initial; }
+  .uof-card.mkt .pct, .uof-card.mkt .dot { background: linear-gradient(135deg, oklch(70% 0.22 250), oklch(60% 0.22 250)); -webkit-background-clip: text; background-clip: text; }
+  .uof-card.mkt .pct { -webkit-text-fill-color: transparent; }
+  .uof-card.mkt .dot { -webkit-text-fill-color: initial; }
+  .uof-card.liq .pct { background: var(--grad-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .uof-card.liq .dot { background: var(--grad-1); }
+
+  /* ───── Language Switcher ───── */
+  .lang-switcher { position: relative; }
+  .lang-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    color: var(--ink-dim);
+    cursor: pointer;
+    transition: color .2s, background .2s, border-color .2s;
+    font-family: inherit;
+  }
+  .lang-btn:hover { color: var(--ink); background: rgba(255,255,255,0.08); border-color: oklch(65% 0.25 295 / 0.5); }
+  .lang-flag { font-size: 17px; line-height: 1; }
+  .lang-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 1px; }
+  .lang-chevron { width: 11px; height: 11px; transition: transform .2s; flex-shrink: 0; }
+  .lang-switcher.open .lang-chevron { transform: rotate(180deg); }
+  .lang-dropdown {
+    position: absolute; top: calc(100% + 10px); right: 0;
+    background: rgba(13,10,31,0.97);
+    border: 1px solid var(--line-2);
+    border-radius: 16px;
+    padding: 8px;
+    min-width: 186px;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 30px oklch(65% 0.25 295 / 0.12);
+    display: none; z-index: 200;
+    animation: ddFade .18s ease;
+  }
+  @keyframes ddFade { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: none; } }
+  .lang-switcher.open .lang-dropdown { display: block; }
+  .lang-option {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 10px 14px;
+    background: none; border: none;
+    color: var(--ink-dim); font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    border-radius: 10px; cursor: pointer;
+    transition: background .2s, color .2s;
+    text-align: left;
+  }
+  .lang-option:hover { background: rgba(255,255,255,0.06); color: var(--ink); }
+  .lang-option.active { background: oklch(65% 0.25 295 / 0.14); color: var(--ink); }
+  .lang-option .lo-flag { font-size: 19px; }
+  .lang-option .lo-name { flex: 1; font-weight: 500; }
+  .lang-option .lo-check { font-size: 12px; color: var(--violet-soft); width: 14px; text-align: right; }
+  .lang-glob { width: 15px; height: 15px; flex-shrink: 0; }
+
+  /* ───── Burger button ───── */
+  .burger {
+    display: none;
+    flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px;
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line-2);
+    border-radius: 12px;
+    cursor: pointer; padding: 0;
+    transition: background .2s, border-color .2s;
+    flex-shrink: 0;
+  }
+  .burger:hover { background: rgba(255,255,255,0.08); border-color: oklch(65% 0.25 295 / 0.5); }
+  .burger span {
+    display: block; width: 18px; height: 1.5px;
+    background: var(--ink); border-radius: 2px;
+    transition: transform .3s cubic-bezier(.2,.7,.2,1), opacity .25s, width .25s;
+    transform-origin: center;
+  }
+  .burger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .burger.open span:nth-child(2) { opacity: 0; width: 0; }
+  .burger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+  /* ───── Mobile menu ───── */
+  .mob-overlay {
+    position: fixed; inset: 0; z-index: 48;
+    background: rgba(7,5,15,0.65);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    opacity: 0; pointer-events: none;
+    transition: opacity .3s;
+  }
+  .mob-overlay.open { opacity: 1; pointer-events: all; }
+
+  .mob-menu {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: min(300px, 88vw);
+    z-index: 49;
+    background: rgba(9,7,22,0.98);
+    border-left: 1px solid var(--line);
+    backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+    transform: translateX(100%);
+    transition: transform .36s cubic-bezier(.2,.7,.2,1);
+    display: flex; flex-direction: column;
+    box-shadow: -30px 0 80px rgba(0,0,0,0.5);
+  }
+  .mob-menu.open { transform: translateX(0); }
+
+  .mob-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .mob-close {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    display: grid; place-items: center;
+    cursor: pointer; color: var(--ink-dim);
+    transition: background .2s, color .2s;
+  }
+  .mob-close:hover { background: rgba(255,255,255,0.08); color: var(--ink); }
+  .mob-close svg { width: 16px; height: 16px; }
+
+  .mob-nav {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 16px 12px;
+    flex: 1; overflow-y: auto;
+  }
+  .mob-nav a {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    color: var(--ink-dim); text-decoration: none;
+    font-size: 16px; font-weight: 500;
+    border-radius: 12px;
+    transition: background .2s, color .2s;
+    border: 1px solid transparent;
+  }
+  .mob-nav a:hover { background: rgba(255,255,255,0.05); color: var(--ink); border-color: var(--line); }
+
+  .mob-foot {
+    padding: 16px 18px 36px;
+    border-top: 1px solid var(--line);
+    flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .mob-cta {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 15px 24px;
+    background: var(--grad-violet);
+    color: white; text-decoration: none;
+    font-size: 15px; font-weight: 600;
+    border-radius: 14px;
+    box-shadow: var(--glow-violet);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .mob-cta:hover { transform: translateY(-2px); }
+  .mob-lang-grid {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  }
+  .mob-lang-pill {
+    display: flex; align-items: center; gap: 5px;
+    padding: 7px 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink-dim); font-size: 12px;
+    font-family: 'JetBrains Mono', monospace; font-weight: 600;
+    cursor: pointer; letter-spacing: 0.5px;
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .mob-lang-pill.active {
+    background: oklch(65% 0.25 295 / 0.15);
+    border-color: oklch(65% 0.25 295 / 0.5);
+    color: var(--ink);
+  }
+  .mob-lang-pill:hover { background: rgba(255,255,255,0.08); color: var(--ink); }
+  .mob-lang-pill .mf { font-size: 15px; }
+
+  /* ───── Responsive · 980px ───── */
+  @media (max-width: 980px) {
+    section { padding: 80px 24px; }
+
+    /* Nav */
+    nav.top { padding: 14px 20px; }
+    nav.top.scrolled { padding: 10px 20px; }
+    .nav-links { display: none; }
+    .nav-cta { display: none; }
+    .burger { display: flex; }
+
+    /* Hero */
+    .hero { padding-top: 100px; padding-bottom: 40px; min-height: auto; }
+    .hero-grid { grid-template-columns: 1fr; gap: 64px; }
+    .hero-visual { max-width: 380px; margin: 0 auto; }
+    .hero h1 { font-size: clamp(42px, 9vw, 68px); }
+    .hero p.lead { font-size: 16px; }
+    .hero-ctas { flex-direction: column; }
+    .hero-ctas .btn-primary, .hero-ctas .btn-ghost { width: 100%; justify-content: center; }
+    .hero-stats { gap: 20px; flex-wrap: wrap; }
+
+    /* Hide decorative floats on mobile */
+    .wallet-float, .coin-float, .founders-chip { display: none; }
+
+    /* Section grids → single column */
+    .ps-grid, .pillars-grid, .split, .round-wrap, .impact, .tok-grid, .uof-cards {
+      grid-template-columns: 1fr;
+    }
+    .pillars-head { flex-direction: column; gap: 24px; align-items: flex-start; }
+    .section-sub { font-size: 16px; max-width: 100%; }
+    .pillar { min-height: auto; }
+    .creator-list { grid-template-columns: 1fr; }
+
+    /* Simulator */
+    .sim-row { grid-template-columns: 1fr; gap: 6px; }
+    .sim-row-r { text-align: left; }
+    .sim-chart { height: 180px; }
+
+    /* CTA */
+    .cta { padding: 100px 24px; }
+    .cta-stats { grid-template-columns: 1fr 1fr; }
+    .cta-buttons { flex-direction: column; align-items: stretch; }
+    .cta-buttons a { text-align: center; justify-content: center; }
+
+    /* Footer */
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+
+    /* Impact */
+    .impact-pct .big { font-size: 100px; }
+
+    /* Tokenomics */
+    .tok-donut-wrap { max-width: 340px; }
+  }
+
+  /* ───── Responsive · 640px ───── */
+  @media (max-width: 640px) {
+    section { padding: 60px 18px; }
+    .hero { padding-top: 90px; }
+    .hero h1 { font-size: clamp(36px, 11vw, 52px); }
+    .hero p.lead { font-size: 15px; }
+    .hero-stats {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 14px; margin-top: 32px;
+    }
+    .hero-stats .stat .v { font-size: 22px; }
+    .hero-ctas .btn-primary, .hero-ctas .btn-ghost { font-size: 14px; padding: 15px 20px; }
+
+    /* Phone visual */
+    .phone { width: 270px; height: 560px; }
+    .hero-visual { max-width: 340px; }
+
+    /* Problem/Solution */
+    .ps-card { padding: 24px; }
+    .ps-card h2 { font-size: 24px; }
+
+    /* Round info */
+    .round-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+    .round-cell .v { font-size: 28px; }
+    .round-info { padding: 28px 22px; }
+
+    /* Pillars */
+    .pillar { padding: 22px 20px; }
+
+    /* Creator + Biz */
+    .creator-card, .biz-card { padding: 28px 22px; }
+    .creator-stat .v { font-size: 22px; }
+
+    /* Tokenomics */
+    .tok-donut-wrap { max-width: 260px; }
+    .tok-center .v { font-size: 42px; }
+
+    /* Use of Funds */
+    .uof { padding: 22px; }
+    .uof-bar { height: 44px; }
+    .uof-seg { padding: 0 8px; font-size: 9px; }
+    .uof-seg .pct { font-size: 14px; }
+    .uof-seg > span { display: none; }
+
+    /* Impact */
+    .impact-pct .big { font-size: 72px; }
+    .impact-pct, .impact-text { padding: 28px 22px; }
+    .impact-text h3 { font-size: 26px; }
+    .impact-text .pillars-mini { flex-wrap: wrap; gap: 16px; }
+
+    /* CTA */
+    .cta { padding: 70px 18px; }
+    .cta h2 { font-size: clamp(36px, 10vw, 56px); }
+    .cta-stats { gap: 20px; }
+
+    /* Sim */
+    .sim-card { padding: 28px 22px; }
+    .sim-mult-row { flex-direction: column; }
+    .mult-pill { text-align: center; }
+
+    /* Footer */
+    .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+    .copy-row { flex-direction: column; gap: 8px; align-items: center; text-align: center; }
+
+    /* Section title */
+    .section-title { font-size: clamp(30px, 8vw, 48px); }
+  }
+
+  /* ───── Responsive · 400px ───── */
+  @media (max-width: 400px) {
+    .hero h1 { font-size: 34px; }
+    .phone { width: 240px; height: 500px; }
+    .round-grid { grid-template-columns: 1fr; }
+    .hero-stats { grid-template-columns: 1fr; }
+    nav.top { padding: 12px 16px; }
+    .lang-btn .lang-code { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Background layers -->
+<div class="grid-bg"></div>
+<div class="noise"></div>
+<div class="orb violet" data-parallax="0.3"></div>
+<div class="orb blue" data-parallax="0.5"></div>
+<div class="orb magenta" data-parallax="0.4"></div>
+<div class="orb mint" data-parallax="0.35"></div>
+<div class="spotlight" id="spotlight"></div>
+
+<!-- Scroll progress -->
+<div class="progress" id="progress"></div>
+
+<!-- Nav -->
+<nav class="top" id="nav">
+  <a href="#" class="brand">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M13 2L3 14h7l-1 8 11-13h-7l1-7z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="name">PowerX <span>OneWallet</span></div>
+  </a>
+  <div class="nav-links">
+    <a href="#problem" data-i18n="nav-vision">Vision</a>
+    <a href="#product" data-i18n="nav-product">Product</a>
+    <a href="#creators" data-i18n="nav-creators">Creators</a>
+    <a href="#round" data-i18n="nav-round">Round</a>
+    <a href="#impact" data-i18n="nav-impact">Impact</a>
+  </div>
+  <div class="lang-switcher" id="langSwitcher">
+    <button class="lang-btn" id="langBtn" aria-label="Select language">
+      <svg class="lang-glob" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+        <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+      </svg>
+      <span class="lang-flag" id="langCurrentFlag">🇺🇸</span>
+      <span class="lang-code" id="langCurrentCode">EN</span>
+      <svg class="lang-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="lang-dropdown" id="langDropdown">
+      <button class="lang-option active" data-lang="en"><span class="lo-flag">🇺🇸</span><span class="lo-name">English</span><span class="lo-check">✓</span></button>
+      <button class="lang-option" data-lang="vi"><span class="lo-flag">🇻🇳</span><span class="lo-name">Tiếng Việt</span><span class="lo-check"></span></button>
+      <button class="lang-option" data-lang="zh"><span class="lo-flag">🇨🇳</span><span class="lo-name">中文</span><span class="lo-check"></span></button>
+      <button class="lang-option" data-lang="ja"><span class="lo-flag">🇯🇵</span><span class="lo-name">日本語</span><span class="lo-check"></span></button>
+      <button class="lang-option" data-lang="ko"><span class="lo-flag">🇰🇷</span><span class="lo-name">한국어</span><span class="lo-check"></span></button>
+    </div>
+  </div>
+  <a href="#round" class="nav-cta">
+    <span class="dot"></span>
+    <span data-i18n="nav-cta">Founders Round</span>
+  </a>
+  <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Mobile menu overlay + drawer -->
+<div class="mob-overlay" id="mobOverlay"></div>
+<div class="mob-menu" id="mobMenu" aria-hidden="true">
+  <div class="mob-head">
+    <a href="#" class="brand" id="mobBrand">
+      <div class="mark">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M13 2L3 14h7l-1 8 11-13h-7l1-7z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="name">PowerX <span>OneWallet</span></div>
+    </a>
+    <button class="mob-close" id="mobClose" aria-label="Close menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+  <nav class="mob-nav">
+    <a href="#problem" data-i18n="nav-vision">Vision</a>
+    <a href="#product" data-i18n="nav-product">Product</a>
+    <a href="#creators" data-i18n="nav-creators">Creators</a>
+    <a href="#round" data-i18n="nav-round">Round</a>
+    <a href="#impact" data-i18n="nav-impact">Impact</a>
+  </nav>
+  <div class="mob-foot">
+    <a href="#round" class="mob-cta">
+      <span class="dot"></span>
+      <span data-i18n="nav-cta">Founders Round</span>
+    </a>
+    <div class="mob-lang-grid">
+      <button class="mob-lang-pill active" data-mobile-lang="en"><span class="mf">🇺🇸</span>EN</button>
+      <button class="mob-lang-pill" data-mobile-lang="vi"><span class="mf">🇻🇳</span>VI</button>
+      <button class="mob-lang-pill" data-mobile-lang="zh"><span class="mf">🇨🇳</span>ZH</button>
+      <button class="mob-lang-pill" data-mobile-lang="ja"><span class="mf">🇯🇵</span>JA</button>
+      <button class="mob-lang-pill" data-mobile-lang="ko"><span class="mf">🇰🇷</span>KO</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ HERO ════ -->
+<section class="hero" id="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow hero-fade"><span class="blip"></span><span data-i18n="hero-eyebrow">Investor One-Pager · 2026</span></div>
+        <h1 class="hero-fade d1">
+          <span class="stack" data-i18n="hero-h1-1">The global</span>
+          <span class="stack grad-violet-text" data-i18n="hero-h1-2">super wallet</span>
+          <span class="stack" data-i18n="hero-h1-3">for Web3.</span>
+        </h1>
+        <p class="lead hero-fade d2" data-i18n="hero-lead">
+          One app where social, creators and finance converge — a self-custodial wallet, social feed, chat, video and exchange under a single identity.
+        </p>
+        <div class="hero-ctas hero-fade d3">
+          <a href="#round" class="btn-primary">
+            <span data-i18n="hero-cta-primary">Join Founders Round</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <a href="#product" class="btn-ghost">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M10 8l6 4-6 4V8z" fill="currentColor"/>
+            </svg>
+            <span data-i18n="hero-cta-ghost">See the product</span>
+          </a>
+        </div>
+        <div class="hero-stats hero-fade d4">
+          <div class="stat"><div class="v" data-counter="500" data-prefix="$" data-suffix="K">$0K</div><div class="l" data-i18n="hero-stat-round-l">Round 1 Raise</div></div>
+          <div class="stat"><div class="v">$0.00125</div><div class="l" data-i18n="hero-stat-token-l">Token Price</div></div>
+          <div class="stat"><div class="v" data-counter="20" data-suffix="%">0%</div><div class="l" data-i18n="hero-stat-alloc-l">Allocation</div></div>
+          <div class="stat"><div class="v" data-counter="8" data-suffix="×">0×</div><div class="l" data-i18n="hero-stat-mult-l">Public Multiple</div></div>
+        </div>
+      </div>
+
+      <!-- Phone visual -->
+      <div class="hero-visual hero-fade d5">
+        <div class="hero-rings">
+          <div class="ring r1"><div class="ring-dot"></div></div>
+          <div class="ring r2"><div class="ring-dot"></div></div>
+          <div class="ring r3"><div class="ring-dot"></div></div>
+        </div>
+
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="app-head">
+              <div class="left">
+                <div class="logo"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h7l-1 8 11-13h-7l1-7z" fill="white"/></svg></div>
+                <div class="name">PowerX</div>
+              </div>
+              <div class="right">
+                <div class="balance">
+                  <div class="l">Balance</div>
+                  <div class="v">$24,012.50</div>
+                </div>
+                <div class="av"></div>
+              </div>
+            </div>
+
+            <div class="trending">
+              <div class="trending-head">
+                <div class="t">Trending Now</div>
+                <div class="more">VIEW ALL ›</div>
+              </div>
+              <div class="trending-row">
+                <div class="creator-mini"><div class="av c1"></div><div class="h">@nft_legend</div></div>
+                <div class="creator-mini"><div class="av c2"></div><div class="h">@dex_master</div></div>
+                <div class="creator-mini"><div class="av c3"></div><div class="h">@ether_queen</div></div>
+                <div class="creator-mini"><div class="av c4"></div><div class="h">@sol_staker</div></div>
+                <div class="creator-mini"><div class="av c5"></div><div class="h">@meta_vo</div></div>
+              </div>
+            </div>
+
+            <div class="post-card">
+              <div class="meta">
+                <div class="av"></div>
+                <div>
+                  <div class="h">@powerxcreator <span class="verified">✓</span></div>
+                  <div class="sub">Building the future of Web3</div>
+                </div>
+                <div class="dots">···</div>
+              </div>
+              <div class="img">
+                <svg class="scene" viewBox="0 0 300 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#0a0420"/>
+                      <stop offset="40%" stop-color="#1a0835"/>
+                      <stop offset="70%" stop-color="#3a0d2e"/>
+                      <stop offset="100%" stop-color="#7a2030"/>
+                    </linearGradient>
+                    <linearGradient id="horizon" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#ff6030" stop-opacity="0.9"/>
+                      <stop offset="100%" stop-color="#ff9060" stop-opacity="0"/>
+                    </linearGradient>
+                    <linearGradient id="mtn1" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#1a0830"/>
+                      <stop offset="100%" stop-color="#0d0420"/>
+                    </linearGradient>
+                    <linearGradient id="mtn2" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#120628"/>
+                      <stop offset="100%" stop-color="#0d0420"/>
+                    </linearGradient>
+                    <linearGradient id="crystal" x1="0.3" y1="0" x2="0.8" y2="1">
+                      <stop offset="0%" stop-color="#c0a0ff"/>
+                      <stop offset="30%" stop-color="#8060e8"/>
+                      <stop offset="60%" stop-color="#6040c8"/>
+                      <stop offset="100%" stop-color="#3a2090"/>
+                    </linearGradient>
+                    <linearGradient id="crystalEdge" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stop-color="#e8d0ff"/>
+                      <stop offset="100%" stop-color="#a080e0"/>
+                    </linearGradient>
+                    <linearGradient id="crystalInner" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.4"/>
+                      <stop offset="50%" stop-color="#b090ff" stop-opacity="0.2"/>
+                      <stop offset="100%" stop-color="#6040c0" stop-opacity="0.1"/>
+                    </linearGradient>
+                    <linearGradient id="glow-blue" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#60c0ff" stop-opacity="0.8"/>
+                      <stop offset="100%" stop-color="#4080ff" stop-opacity="0"/>
+                    </linearGradient>
+                    <radialGradient id="glowOrb" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#8060ff" stop-opacity="0.5"/>
+                      <stop offset="100%" stop-color="#4020a0" stop-opacity="0"/>
+                    </radialGradient>
+                    <filter id="glow">
+                      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                    <filter id="softglow">
+                      <feGaussianBlur stdDeviation="4" result="blur"/>
+                      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                  </defs>
+                  <!-- Sky -->
+                  <rect width="300" height="180" fill="url(#sky)"/>
+                  <!-- Horizon glow -->
+                  <rect x="0" y="120" width="300" height="60" fill="url(#horizon)" opacity="0.7"/>
+                  <!-- Diagonal pink streaks -->
+                  <line x1="-10" y1="60" x2="120" y2="135" stroke="#ff6090" stroke-width="1.2" opacity="0.5"/>
+                  <line x1="20" y1="50" x2="150" y2="140" stroke="#ff80a0" stroke-width="0.7" opacity="0.35"/>
+                  <line x1="60" y1="30" x2="200" y2="145" stroke="#ff50a0" stroke-width="0.9" opacity="0.3"/>
+                  <line x1="150" y1="20" x2="300" y2="130" stroke="#d060b0" stroke-width="0.6" opacity="0.25"/>
+                  <!-- Blue energy glow top-right -->
+                  <ellipse cx="265" cy="30" rx="55" ry="40" fill="url(#glow-blue)" opacity="0.6"/>
+                  <circle cx="272" cy="22" r="18" fill="#60d0ff" opacity="0.12" filter="url(#softglow)"/>
+                  <!-- Stars/particles -->
+                  <circle cx="30" cy="18" r="0.8" fill="white" opacity="0.8"/>
+                  <circle cx="55" cy="10" r="0.6" fill="white" opacity="0.6"/>
+                  <circle cx="80" cy="25" r="0.5" fill="white" opacity="0.5"/>
+                  <circle cx="110" cy="8" r="0.7" fill="white" opacity="0.7"/>
+                  <circle cx="140" cy="15" r="0.5" fill="white" opacity="0.5"/>
+                  <circle cx="200" cy="12" r="0.6" fill="white" opacity="0.6"/>
+                  <circle cx="230" cy="5" r="0.8" fill="#a0c0ff" opacity="0.8"/>
+                  <circle cx="260" cy="50" r="0.7" fill="#80e0ff" opacity="0.6"/>
+                  <circle cx="285" cy="38" r="0.5" fill="#60d0ff" opacity="0.7"/>
+                  <circle cx="12" cy="42" r="0.6" fill="white" opacity="0.4"/>
+                  <circle cx="170" cy="30" r="0.5" fill="white" opacity="0.5"/>
+                  <!-- Blue particle dots -->
+                  <circle cx="218" cy="58" r="1.2" fill="#60c0ff" opacity="0.7"/>
+                  <circle cx="235" cy="45" r="0.9" fill="#80d0ff" opacity="0.6"/>
+                  <circle cx="248" cy="62" r="1.0" fill="#50b0ff" opacity="0.5"/>
+                  <circle cx="260" cy="70" r="0.8" fill="#70d0ff" opacity="0.5"/>
+                  <!-- Mountain silhouettes back -->
+                  <polygon points="0,145 40,80 80,130 100,95 140,145" fill="url(#mtn2)" opacity="0.8"/>
+                  <polygon points="160,145 200,85 240,110 270,75 300,125 300,145" fill="url(#mtn2)" opacity="0.8"/>
+                  <!-- Mountain silhouettes front -->
+                  <polygon points="0,180 60,125 90,145 130,110 160,135 195,100 230,130 260,108 300,140 300,180" fill="url(#mtn1)"/>
+                  <!-- Crystal glow base -->
+                  <ellipse cx="150" cy="158" rx="38" ry="10" fill="url(#glowOrb)" opacity="0.7"/>
+                  <!-- Main central diamond crystal -->
+                  <g filter="url(#glow)">
+                    <!-- Left face -->
+                    <polygon points="150,62 118,120 150,138" fill="url(#crystal)" opacity="0.9"/>
+                    <!-- Right face -->
+                    <polygon points="150,62 182,120 150,138" fill="#7050d0" opacity="0.85"/>
+                    <!-- Top-left facet -->
+                    <polygon points="150,62 128,88 118,120" fill="#b090f0" opacity="0.75"/>
+                    <!-- Top-right facet -->
+                    <polygon points="150,62 172,88 182,120" fill="#5030b0" opacity="0.7"/>
+                    <!-- Inner highlight -->
+                    <polygon points="150,68 155,90 148,110 145,90" fill="url(#crystalInner)"/>
+                    <!-- Crystal edges -->
+                    <polyline points="150,62 118,120 150,138 182,120 150,62" fill="none" stroke="url(#crystalEdge)" stroke-width="0.8" opacity="0.9"/>
+                    <line x1="150" y1="62" x2="150" y2="138" stroke="#d0c0ff" stroke-width="0.5" opacity="0.5"/>
+                    <line x1="118" y1="120" x2="182" y2="120" stroke="#c0b0ff" stroke-width="0.5" opacity="0.4"/>
+                  </g>
+                  <!-- Small crystal fragment top-left -->
+                  <g filter="url(#glow)" transform="translate(38,28) rotate(-15)">
+                    <polygon points="0,-18 -10,0 0,10" fill="#9070e0" opacity="0.8"/>
+                    <polygon points="0,-18 10,0 0,10" fill="#6040c0" opacity="0.7"/>
+                    <polyline points="0,-18 -10,0 0,10 10,0 0,-18" fill="none" stroke="#c0a0ff" stroke-width="0.7" opacity="0.9"/>
+                  </g>
+                  <!-- Crystal light reflection on ground -->
+                  <ellipse cx="150" cy="155" rx="20" ry="4" fill="#8060ff" opacity="0.25"/>
+                </svg>
+                <div class="play"><svg viewBox="0 0 24 24" fill="white"><polygon points="7,5 19,12 7,19"/></svg></div>
+                <div class="badge">
+                  <div class="b"><svg viewBox="0 0 24 24" fill="white"><path d="M13 2L3 14h7l-1 8 11-13h-7l1-7z"/></svg></div>
+                  PWX EXCLUSIVE
+                </div>
+              </div>
+              <div class="acts">
+                <span class="ic heart"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-9.5-9.5C1 8 3 4.5 6.5 4.5c2 0 3.5 1 5.5 3 2-2 3.5-3 5.5-3C21 4.5 23 8 21.5 11.5 19 16.5 12 21 12 21z"/></svg>1.2K</span>
+                <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.4 8.4 0 01-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.4 8.4 0 013.8-.9h.5a8.5 8.5 0 018 8v.5z"/></svg>95</span>
+                <span class="buy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></svg>BUY TOKEN</span>
+              </div>
+            </div>
+
+            <div class="bnav">
+              <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12L12 4l9 8M5 10v10h14V10"/></svg>Home</div>
+              <div class="item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="14" height="14" rx="2"/><rect x="7" y="7" width="14" height="14" rx="2"/></svg>Feed</div>
+              <div class="add"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14"/></svg></div>
+              <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>Wallet</div>
+              <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M3 20c0-3 2.7-5 6-5h6c3.3 0 6 2 6 5"/></svg>Creators</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating wallet card -->
+        <div class="wallet-float">
+          <h4>Wallet · Total</h4>
+          <div class="price">$24,012.50</div>
+          <div class="wallet-row">
+            <div class="tk"><div class="ic pwx">⚡</div>PWX</div>
+            <div class="amt">12,450.00</div>
+          </div>
+          <div class="wallet-row">
+            <div class="tk"><div class="ic eth">Ξ</div>ETH</div>
+            <div class="amt">2.356</div>
+          </div>
+          <div class="wallet-row">
+            <div class="tk"><div class="ic usdc">$</div>USDC</div>
+            <div class="amt">1,980.00</div>
+          </div>
+        </div>
+
+        <!-- Floating coin -->
+        <div class="coin-float">
+          <svg viewBox="0 0 130 130" fill="none">
+            <defs>
+              <radialGradient id="coingrad" cx="40%" cy="35%" r="65%">
+                <stop offset="0%" stop-color="oklch(85% 0.20 295)"/>
+                <stop offset="50%" stop-color="oklch(65% 0.25 295)"/>
+                <stop offset="100%" stop-color="oklch(40% 0.18 290)"/>
+              </radialGradient>
+              <linearGradient id="boltgrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="white"/>
+                <stop offset="100%" stop-color="oklch(80% 0.20 295)"/>
+              </linearGradient>
+            </defs>
+            <circle cx="65" cy="65" r="55" fill="url(#coingrad)"/>
+            <circle cx="65" cy="65" r="55" stroke="oklch(80% 0.20 295 / 0.6)" stroke-width="1" fill="none"/>
+            <circle cx="65" cy="65" r="48" stroke="oklch(80% 0.20 295 / 0.3)" stroke-width="0.5" fill="none"/>
+            <path d="M68 38L48 70h14l-3 22 22-32H68l3-22z" fill="url(#boltgrad)" stroke="white" stroke-width="0.5" stroke-linejoin="round" filter="drop-shadow(0 0 8px white)"/>
+            <circle cx="50" cy="50" r="2" fill="white" opacity="0.7"/>
+            <circle cx="85" cy="55" r="1" fill="white" opacity="0.5"/>
+          </svg>
+        </div>
+
+        <!-- Floating founders chip -->
+        <div class="founders-chip">
+          <div class="ic">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2l1.5 6L20 9l-5 4.5L16.5 22 12 18l-4.5 4 1.5-8.5L4 9l6.5-1L12 2z" fill="white"/>
+            </svg>
+          </div>
+          <div class="txt">
+            <div class="lbl">Founders Round</div>
+            <div class="v">Open Now</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ TICKER ════ -->
+<div class="ticker">
+  <div class="ticker-track">
+    <span><span class="dot"></span>Self-custodial</span>
+    <span class="dim">·</span>
+    <span>Social Feed</span>
+    <span class="dim">·</span>
+    <span><span class="dot"></span>Native Chat</span>
+    <span class="dim">·</span>
+    <span>Video Scroll</span>
+    <span class="dim">·</span>
+    <span><span class="dot"></span>Built-in Exchange</span>
+    <span class="dim">·</span>
+    <span>Algorithm-free</span>
+    <span class="dim">·</span>
+    <span><span class="dot"></span>Creator-owned</span>
+    <span class="dim">·</span>
+    <!-- duplicate for loop -->
+    <span><span class="dot"></span>Self-custodial</span>
+    <span class="dim">·</span>
+    <span>Social Feed</span>
+    <span class="dim">·</span>
+    <span><span class="dot"></span>Native Chat</span>
+    <span class="dim">·</span>
+    <span>Video Scroll</span>
+    <span class="dim">·</span>
+    <span><span class="dot"></span>Built-in Exchange</span>
+    <span class="dim">·</span>
+    <span>Algorithm-free</span>
+    <span class="dim">·</span>
+    <span><span class="dot"></span>Creator-owned</span>
+    <span class="dim">·</span>
+  </div>
+</div>
+
+<!-- ════ PROBLEM / SOLUTION ════ -->
+<section id="problem">
+  <div class="container">
+    <div class="reveal"><div class="eyebrow"><span class="blip"></span><span data-i18n="prob-eyebrow">The Vision</span></div></div>
+    <h2 class="section-title reveal delay-1" data-i18n-html="prob-h2">Platforms capture all the value.<br><span class="grad-violet-text">Creators don't.</span></h2>
+    <p class="section-sub reveal delay-2" data-i18n="prob-sub">Web2 social platforms own your audience, your content, and your earnings. We're rebuilding the stack — one wallet, one identity, one ecosystem.</p>
+
+    <div class="ps-grid">
+      <div class="ps-card problem reveal delay-3">
+        <div class="mini-eyebrow"><span class="ic">!</span><span data-i18n="prob-card-eye">The Problem</span></div>
+        <h2 data-i18n-html="prob-card-h2">Three silos.<br>One losing creator.</h2>
+        <ul class="ps-list">
+          <li><span class="check">✕</span><div data-i18n-html="prob-li-1">Centralized platforms <strong style="color:var(--ink)">own user data</strong> &amp; audiences — and rent them back to you.</div></li>
+          <li><span class="check">✕</span><div data-i18n-html="prob-li-2">Creator monetization is <strong style="color:var(--ink)">fragmented &amp; slow</strong>: 5+ tools, weeks-long payouts.</div></li>
+          <li><span class="check">✕</span><div data-i18n-html="prob-li-3">Content and payments live in <strong style="color:var(--ink)">separate silos</strong> — value leaks at every hop.</div></li>
+        </ul>
+      </div>
+      <div class="ps-card solution reveal delay-4">
+        <div class="mini-eyebrow"><span class="ic">✓</span><span data-i18n="sol-card-eye">Our Solution</span></div>
+        <h2 data-i18n-html="sol-card-h2">One ecosystem.<br><span class="grad-violet-text">One super wallet.</span></h2>
+        <ul class="ps-list">
+          <li><span class="check">✓</span><div data-i18n-html="sol-li-1">Social feed · chat · video · exchange — <strong style="color:var(--ink)">unified under one identity</strong>.</div></li>
+          <li><span class="check">✓</span><div data-i18n-html="sol-li-2">Self-custodial wallet <strong style="color:var(--ink)">built into every interaction</strong> — tip, post, swap, earn.</div></li>
+          <li><span class="check">✓</span><div data-i18n-html="sol-li-3">Creators earn <strong style="color:var(--ink)">directly from fans</strong> — instant token payouts, no middleman.</div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ PRODUCT PILLARS ════ -->
+<section id="product">
+  <div class="container">
+    <div class="pillars-head">
+      <div>
+        <div class="reveal"><div class="eyebrow"><span class="blip"></span><span data-i18n="prod-eyebrow">Product · 4 Pillars</span></div></div>
+        <h2 class="section-title reveal delay-1" data-i18n-html="prod-h2">A complete app.<br>Not a feature.</h2>
+      </div>
+      <p class="section-sub reveal delay-2" style="margin-bottom: 6px;" data-i18n="prod-sub">Every primitive of the modern internet, native to crypto and your wallet — from the moment you open the app.</p>
+    </div>
+
+    <div class="pillars-grid">
+      <div class="pillar p1 reveal delay-1">
+        <div class="num" data-i18n="pillar-1-num">01 — SOCIAL</div>
+        <div class="icon-box">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.6"/>
+            <circle cx="17" cy="8" r="3" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M3 20c0-3 2.7-5 6-5h6c3.3 0 6 2 6 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 data-i18n="pillar-1-h3">Social Feed</h3>
+        <p data-i18n="pillar-1-p">Algorithm-free feed where every post, like and follow is yours. Owned on-chain. No pay-to-reach.</p>
+        <ul>
+          <li data-i18n="pillar-1-li-1">Follow &amp; post</li>
+          <li data-i18n="pillar-1-li-2">On-chain ownership</li>
+          <li data-i18n="pillar-1-li-3">No black-box ranking</li>
+        </ul>
+      </div>
+
+      <div class="pillar p2 reveal delay-2">
+        <div class="num" data-i18n="pillar-2-num">02 — CHAT</div>
+        <div class="icon-box">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <path d="M3 6h14a2 2 0 012 2v6a2 2 0 01-2 2h-7l-5 4v-4H3a2 2 0 01-2-2V8a2 2 0 012-2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" transform="translate(2,0)"/>
+            <circle cx="9" cy="11" r="1" fill="currentColor"/>
+            <circle cx="13" cy="11" r="1" fill="currentColor"/>
+            <circle cx="17" cy="11" r="1" fill="currentColor"/>
+          </svg>
+        </div>
+        <h3 data-i18n="pillar-2-h3">Native Chat</h3>
+        <p data-i18n="pillar-2-p">1-on-1 and group conversations with built-in tipping, NFT sends, and token gifting — without leaving the thread.</p>
+        <ul>
+          <li data-i18n="pillar-2-li-1">1:1 &amp; group threads</li>
+          <li data-i18n="pillar-2-li-2">Native tipping</li>
+          <li data-i18n="pillar-2-li-3">Send NFTs &amp; tokens</li>
+        </ul>
+      </div>
+
+      <div class="pillar p3 reveal delay-3">
+        <div class="num" data-i18n="pillar-3-num">03 — VIDEO</div>
+        <div class="icon-box">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M10 9l5 3-5 3V9z" fill="currentColor"/>
+          </svg>
+        </div>
+        <h3 data-i18n="pillar-3-h3">Video Scroll</h3>
+        <p data-i18n="pillar-3-p">Short and long-form, monetized day one. Earn from views with built-in tipping baked into every play.</p>
+        <ul>
+          <li data-i18n="pillar-3-li-1">Short &amp; long-form</li>
+          <li data-i18n="pillar-3-li-2">Earn from views</li>
+          <li data-i18n="pillar-3-li-3">Built-in tipping</li>
+        </ul>
+      </div>
+
+      <div class="pillar p4 reveal delay-4">
+        <div class="num" data-i18n="pillar-4-num">04 — WALLET</div>
+        <div class="icon-box">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M3 10h18" stroke="currentColor" stroke-width="1.6"/>
+            <circle cx="17" cy="14" r="1.5" fill="currentColor"/>
+          </svg>
+        </div>
+        <h3 data-i18n="pillar-4-h3">Wallet &amp; Exchange</h3>
+        <p data-i18n="pillar-4-p">Self-custodial wallet with send, stake, swap and trading — every action in social happens through it.</p>
+        <ul>
+          <li data-i18n="pillar-4-li-1">Self-custodial</li>
+          <li data-i18n="pillar-4-li-2">Send · stake · swap</li>
+          <li data-i18n="pillar-4-li-3">Trade in-app</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ CREATOR + BUSINESS ════ -->
+<section id="creators">
+  <div class="container">
+    <div class="reveal"><div class="eyebrow"><span class="blip"></span><span data-i18n="creators-eyebrow">Creators · Business Model</span></div></div>
+    <h2 class="section-title reveal delay-1" data-i18n-html="creators-h2">Where creators <span class="grad-magenta-text">win.</span></h2>
+    <p class="section-sub reveal delay-2" data-i18n="creators-sub">Creators keep their audience and their earnings. We capture value through the financial layer — not by taxing reach.</p>
+
+    <div class="split">
+      <div class="creator-card reveal delay-3">
+        <h3 data-i18n="creators-card-h3">Built for the people who build the network.</h3>
+        <div class="creator-stats">
+          <div class="creator-stat">
+            <div class="lbl" data-i18n="creators-stat-1-lbl">Avg. Followers</div>
+            <div class="v" data-counter="12600" data-suffix="">0</div>
+          </div>
+          <div class="creator-stat">
+            <div class="lbl" data-i18n="creators-stat-2-lbl">Avg. Earnings / mo</div>
+            <div class="v" data-counter="23400" data-prefix="$">$0</div>
+          </div>
+        </div>
+        <ul class="creator-list">
+          <li><span class="ck">✓</span><span data-i18n="creators-li-1">On-chain creator profiles &amp; portable reputation</span></li>
+          <li><span class="ck">✓</span><span data-i18n="creators-li-2">Tips &amp; subs — instant token payouts</span></li>
+          <li><span class="ck">✓</span><span data-i18n="creators-li-3">Engagement rewards: creators &amp; fans both earn</span></li>
+          <li><span class="ck">✓</span><span data-i18n="creators-li-4">Live + short-form video monetized day one</span></li>
+          <li><span class="ck">✓</span><span data-i18n="creators-li-5">Algorithm-free feed: no pay-to-reach</span></li>
+          <li><span class="ck">✓</span><span data-i18n="creators-li-6">NFT drops native to every profile</span></li>
+        </ul>
+      </div>
+
+      <div class="biz-card reveal delay-4">
+        <div class="eyebrow" style="margin-bottom: 8px;"><span class="blip"></span><span data-i18n="biz-eyebrow">Business Model</span></div>
+        <h3 data-i18n="biz-h3">Four revenue streams.</h3>
+        <p style="font-size: 14px; color: var(--ink-dim); margin-bottom: 8px;" data-i18n="biz-sub">Diversified, on-chain, scaling with the network.</p>
+        <ul class="biz-list">
+          <li><span class="num">01</span><div class="txt" data-i18n-html="biz-li-1-txt"><strong>Transaction fees</strong> on every payment &amp; trade</div></li>
+          <li><span class="num">02</span><div class="txt" data-i18n-html="biz-li-2-txt"><strong>Premium subscriptions</strong> &amp; pro creator tools</div></li>
+          <li><span class="num">03</span><div class="txt" data-i18n-html="biz-li-3-txt"><strong>Cut of creator subs</strong> &amp; tipping pools</div></li>
+          <li><span class="num">04</span><div class="txt" data-i18n-html="biz-li-4-txt"><strong>Financial services:</strong> staking, swaps, markets</div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ FOUNDERS ROUND ════ -->
+<section id="round">
+  <div class="container">
+    <div class="reveal"><div class="eyebrow"><span class="blip"></span><span data-i18n="round-eyebrow">$ Founders Round — Open Now</span></div></div>
+    <h2 class="section-title reveal delay-1" data-i18n-html="round-h2">Get in at the <span class="grad-violet-text">earliest entry.</span></h2>
+    <p class="section-sub reveal delay-2" data-i18n="round-sub">$500K cap. $25K minimum. The lowest token price you'll ever see — before Round 2 marks 4× and public mints at 8×.</p>
+
+    <div class="round-wrap">
+      <div class="round-info reveal delay-3">
+        <div class="round-grid">
+          <div class="round-cell">
+            <div class="lbl" data-i18n="round-cell-1-lbl">Round 1 Raise</div>
+            <div class="v grad" data-counter="500" data-prefix="$" data-suffix="K">$0K</div>
+            <div class="sub" data-i18n="round-cell-1-sub">Hard cap</div>
+          </div>
+          <div class="round-cell">
+            <div class="lbl" data-i18n="round-cell-2-lbl">Min Investment</div>
+            <div class="v grad" data-counter="25" data-prefix="$" data-suffix="K">$0K</div>
+            <div class="sub" data-i18n="round-cell-2-sub">Per investor</div>
+          </div>
+          <div class="round-cell">
+            <div class="lbl" data-i18n="round-cell-3-lbl">Token Price</div>
+            <div class="v">$0.00125</div>
+            <div class="sub" data-i18n="round-cell-3-sub">Founders entry</div>
+          </div>
+          <div class="round-cell">
+            <div class="lbl" data-i18n="round-cell-4-lbl">Allocation</div>
+            <div class="v" data-counter="20" data-suffix="%">0%</div>
+            <div class="sub" data-i18n="round-cell-4-sub">Of total supply</div>
+          </div>
+        </div>
+        <a href="#" class="btn-primary" style="width: 100%; justify-content: center;">
+          <span data-i18n="round-reserve">Reserve allocation</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+
+      <div class="sim-card reveal delay-4">
+        <div class="sim-head">
+          <h3 data-i18n="sim-h3">Live Investor Simulation</h3>
+          <p data-i18n="sim-p">Drag to size your stack — watch the numbers grow.</p>
+        </div>
+        <div class="sim-input">
+          <div class="sim-input-row">
+            <span class="lbl" data-i18n="sim-lbl">Your investment</span>
+            <span class="amt" id="simAmt">$25,000</span>
+          </div>
+          <input type="range" class="sim-slider" id="simSlider" min="25000" max="250000" step="5000" value="25000">
+          <div class="sim-input-ticks"><span>$25K</span><span>$100K</span><span>$175K</span><span>$250K</span></div>
+        </div>
+        <div class="sim-bars">
+          <div class="sim-row">
+            <div class="sim-row-l"><span data-i18n="sim-tok-l">Tokens received</span><strong data-i18n="sim-tok-rate">@ $0.00125</strong></div>
+            <div class="sim-row-bar"><div class="b b-tok" id="barTok"></div></div>
+            <div class="sim-row-r" id="valTok">20,000,000 PWX</div>
+          </div>
+          <div class="sim-row">
+            <div class="sim-row-l"><span data-i18n="sim-r2-l">Value at Round 2</span><strong data-i18n="sim-r2-rate">$0.005 · 4×</strong></div>
+            <div class="sim-row-bar"><div class="b b-r2" id="barR2"></div></div>
+            <div class="sim-row-r" id="valR2">$100,000</div>
+          </div>
+          <div class="sim-row">
+            <div class="sim-row-l"><span data-i18n="sim-ann-l">Annual revenue</span><strong data-i18n="sim-ann-rate">~120% APY</strong></div>
+            <div class="sim-row-bar"><div class="b b-ann" id="barAnn"></div></div>
+            <div class="sim-row-r" id="valAnn">$30,000</div>
+          </div>
+          <div class="sim-row total">
+            <div class="sim-row-l" data-i18n="sim-tot-l">Total value after 1 year</div>
+            <div class="sim-row-bar"><div class="b b-tot" id="barTot"></div></div>
+            <div class="sim-row-r" id="valTot">$130,000</div>
+          </div>
+        </div>
+        <div class="sim-mult-row">
+          <div class="mult-pill" id="multTot">5.2× in year one</div>
+          <div class="mult-pill grad" id="multPub" data-i18n="sim-mult-pub">8× at public ($0.01)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ TOKENOMICS ════ -->
+<section id="tokenomics">
+  <div class="container">
+    <div class="reveal"><div class="eyebrow"><span class="blip"></span><span data-i18n="tok-eyebrow">Tokenomics</span></div></div>
+    <h2 class="section-title reveal delay-1" data-i18n-html="tok-h2">Built for the <span class="grad-violet-text">community</span>.</h2>
+    <p class="section-sub reveal delay-2" data-i18n="tok-sub">60% of supply goes back to users and creators. Founders, team and treasury are minority stakeholders by design.</p>
+    <div class="tok-grid">
+      <div class="tok-donut-wrap reveal delay-3">
+        <svg class="tok-donut" viewBox="0 0 200 200">
+          <defs>
+            <linearGradient id="tg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="oklch(70% 0.28 330)"/><stop offset="100%" stop-color="oklch(65% 0.25 295)"/></linearGradient>
+            <linearGradient id="tg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="oklch(65% 0.25 295)"/><stop offset="100%" stop-color="oklch(70% 0.22 250)"/></linearGradient>
+            <linearGradient id="tg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="oklch(70% 0.22 250)"/><stop offset="100%" stop-color="oklch(80% 0.18 175)"/></linearGradient>
+            <linearGradient id="tg4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="oklch(80% 0.18 175)"/><stop offset="100%" stop-color="oklch(75% 0.15 200)"/></linearGradient>
+            <linearGradient id="tg5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="oklch(60% 0.10 295)"/><stop offset="100%" stop-color="oklch(50% 0.08 280)"/></linearGradient>
+          </defs>
+          <circle class="track" cx="100" cy="100" r="75"/>
+          <circle class="seg" cx="100" cy="100" r="75" stroke="url(#tg1)" data-pct="60" data-offset="0"/>
+          <circle class="seg" cx="100" cy="100" r="75" stroke="url(#tg2)" data-pct="20" data-offset="60"/>
+          <circle class="seg" cx="100" cy="100" r="75" stroke="url(#tg3)" data-pct="10" data-offset="80"/>
+          <circle class="seg" cx="100" cy="100" r="75" stroke="url(#tg4)" data-pct="5" data-offset="90"/>
+          <circle class="seg" cx="100" cy="100" r="75" stroke="url(#tg5)" data-pct="5" data-offset="95"/>
+        </svg>
+        <div class="tok-center">
+          <div class="lbl" data-i18n="tok-center-lbl">PWX Token</div>
+          <div class="v">100%</div>
+          <div class="sub" data-i18n="tok-center-sub">Total Supply</div>
+        </div>
+      </div>
+      <div class="tok-legend">
+        <div class="tok-row reveal delay-1"><div class="swatch" style="background: linear-gradient(135deg, oklch(70% 0.28 330), oklch(65% 0.25 295)); color: oklch(65% 0.25 295);"></div><div class="body"><div class="name" data-i18n="tok-1-name">Community</div><div class="desc" data-i18n="tok-1-desc">Rewards, airdrops, creator pools, ecosystem grants.</div></div><div class="pct grad-magenta-text">60%</div></div>
+        <div class="tok-row reveal delay-2"><div class="swatch" style="background: linear-gradient(135deg, oklch(65% 0.25 295), oklch(70% 0.22 250)); color: oklch(65% 0.25 295);"></div><div class="body"><div class="name" data-i18n="tok-2-name">Founders Round</div><div class="desc" data-i18n="tok-2-desc">Open now. Earliest entry at $0.00125.</div></div><div class="pct grad-violet-text">20%</div></div>
+        <div class="tok-row reveal delay-3"><div class="swatch" style="background: linear-gradient(135deg, oklch(70% 0.22 250), oklch(80% 0.18 175)); color: oklch(70% 0.22 250);"></div><div class="body"><div class="name" data-i18n="tok-3-name">Public Round</div><div class="desc" data-i18n="tok-3-desc">TGE listing at $0.01 · 8× founders price.</div></div><div class="pct" style="color: oklch(78% 0.20 250);">10%</div></div>
+        <div class="tok-row reveal delay-4"><div class="swatch" style="background: linear-gradient(135deg, oklch(80% 0.18 175), oklch(75% 0.15 200)); color: oklch(80% 0.18 175);"></div><div class="body"><div class="name" data-i18n="tok-4-name">Team</div><div class="desc" data-i18n="tok-4-desc">Vested 4 years · 12-month cliff.</div></div><div class="pct" style="color: var(--mint);">5%</div></div>
+        <div class="tok-row reveal delay-5"><div class="swatch" style="background: linear-gradient(135deg, oklch(60% 0.10 295), oklch(50% 0.08 280)); color: oklch(60% 0.10 295);"></div><div class="body"><div class="name" data-i18n="tok-5-name">Treasury</div><div class="desc" data-i18n="tok-5-desc">Reserves for partnerships &amp; ecosystem ops.</div></div><div class="pct" style="color: var(--ink-dim);">5%</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ USE OF FUNDS ════ -->
+<section id="use-of-funds" style="padding-top: 0;">
+  <div class="container">
+    <div class="uof reveal">
+      <div class="uof-head">
+        <div>
+          <div class="eyebrow" style="margin-bottom: 8px;"><span class="blip"></span><span data-i18n="uof-eyebrow">Use of Funds</span></div>
+          <h3 data-i18n="uof-h3">Where the $500K goes.</h3>
+        </div>
+        <div class="sub" data-i18n="uof-sub">Capital deployment plan for Founders Round proceeds.</div>
+      </div>
+      <div class="uof-bar">
+        <div class="uof-seg tech" data-w="10%"><div class="pct">10%</div><span data-i18n="uof-seg-tech">Tech</span></div>
+        <div class="uof-seg mkt" data-w="30%"><div class="pct">30%</div><span data-i18n="uof-seg-mkt">Marketing</span></div>
+        <div class="uof-seg liq" data-w="60%"><div class="pct">60%</div><span data-i18n="uof-seg-liq">Liquidity &amp; RWA</span></div>
+      </div>
+      <div class="uof-cards">
+        <div class="uof-card tech">
+          <div class="top"><span class="dot"></span><span class="lbl" data-i18n="uof-card-tech-lbl">Tech · 10%</span></div>
+          <div class="pct">$50K</div>
+          <div class="desc" data-i18n="uof-card-tech-desc">Engineering, infrastructure, security audits and product development.</div>
+        </div>
+        <div class="uof-card mkt">
+          <div class="top"><span class="dot"></span><span class="lbl" data-i18n="uof-card-mkt-lbl">Marketing · 30%</span></div>
+          <div class="pct">$150K</div>
+          <div class="desc" data-i18n="uof-card-mkt-desc">Creator partnerships, launch campaigns, community growth.</div>
+        </div>
+        <div class="uof-card liq">
+          <div class="top"><span class="dot"></span><span class="lbl" data-i18n="uof-card-liq-lbl">Liquidity &amp; RWA · 60%</span></div>
+          <div class="pct">$300K</div>
+          <div class="desc" data-i18n="uof-card-liq-desc">DEX liquidity provisioning and real-world-asset backing for the treasury.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="impact">
+  <div class="container">
+    <div class="reveal"><div class="eyebrow"><span class="blip"></span><span data-i18n="impact-eyebrow">Built-in impact</span></div></div>
+    <h2 class="section-title reveal delay-1" data-i18n-html="impact-h2">Every fee, <span style="color: var(--mint);">a little better.</span></h2>
+    <p class="section-sub reveal delay-2" data-i18n="impact-sub">2% of every fee goes to charity — building hospitals and access to education. Fully on-chain, fully tracked.</p>
+
+    <div class="impact">
+      <div class="impact-pct reveal delay-3">
+        <div class="big">2%</div>
+        <div class="lbl" data-i18n="impact-pct-lbl">Of every fee · forever</div>
+      </div>
+      <div class="impact-text reveal delay-4">
+        <h3 data-i18n="impact-text-h3">Profit and purpose, on the same chain.</h3>
+        <p data-i18n="impact-text-p">We don't believe responsibility should be a press release. Every transaction in the PowerX ecosystem routes 2% to verified initiatives — auditable, transparent, on-chain.</p>
+        <div class="pillars-mini">
+          <div class="item"><div class="v" data-i18n="impact-mini-1-v">Hospitals</div><div class="l" data-i18n="impact-mini-1-l">Healthcare access</div></div>
+          <div class="item"><div class="v" data-i18n="impact-mini-2-v">Schools</div><div class="l" data-i18n="impact-mini-2-l">Education programs</div></div>
+          <div class="item"><div class="v" data-i18n="impact-mini-3-v">Verified</div><div class="l" data-i18n="impact-mini-3-l">On-chain audit</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ FINAL CTA ════ -->
+<section class="cta">
+  <div class="container">
+    <div class="reveal"><div class="eyebrow"><span class="blip"></span><span data-i18n="cta-eyebrow">The next billion users</span></div></div>
+    <h2 class="reveal delay-1" data-i18n-html="cta-h2">The global super wallet<br><span class="grad-violet-text">for Web3.</span></h2>
+    <p class="reveal delay-2" data-i18n="cta-p">Social and finance converge. Creators own their value. Built for the next billion users — and the founders who get there first.</p>
+    <div class="cta-buttons reveal delay-3">
+      <a href="#" class="btn-primary">
+        <span data-i18n="cta-primary">Reserve $25K allocation</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <a href="#" class="btn-ghost" data-i18n="cta-ghost">Read the whitepaper</a>
+    </div>
+    <div class="cta-stats">
+      <div class="item reveal delay-1"><div class="v">$500K</div><div class="l" data-i18n="cta-stat-1-l">Round 1</div></div>
+      <div class="item reveal delay-2"><div class="v">$25K</div><div class="l" data-i18n="cta-stat-2-l">Min ticket</div></div>
+      <div class="item reveal delay-3"><div class="v">4×</div><div class="l" data-i18n="cta-stat-3-l">Round 2 multiple</div></div>
+      <div class="item reveal delay-4"><div class="v">8×</div><div class="l" data-i18n="cta-stat-4-l">Public multiple</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div class="brand-blob">
+      <a href="#" class="brand">
+        <div class="mark">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M13 2L3 14h7l-1 8 11-13h-7l1-7z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="name">PowerX <span>OneWallet</span></div>
+      </a>
+      <p data-i18n="footer-brand-p">The global super wallet for Web3. Social, creators and finance — under one identity.</p>
+    </div>
+    <div>
+      <h5 data-i18n="footer-prod-h5">Product</h5>
+      <ul>
+        <li><a href="#product" data-i18n="footer-prod-1">Social Feed</a></li>
+        <li><a href="#product" data-i18n="footer-prod-2">Chat</a></li>
+        <li><a href="#product" data-i18n="footer-prod-3">Video</a></li>
+        <li><a href="#product" data-i18n="footer-prod-4">Wallet &amp; Exchange</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5 data-i18n="footer-inv-h5">Investors</h5>
+      <ul>
+        <li><a href="#round" data-i18n="footer-inv-1">Founders Round</a></li>
+        <li><a href="#" data-i18n="footer-inv-2">Whitepaper</a></li>
+        <li><a href="#" data-i18n="footer-inv-3">Tokenomics</a></li>
+        <li><a href="#" data-i18n="footer-inv-4">Roadmap</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5 data-i18n="footer-co-h5">Company</h5>
+      <ul>
+        <li><a href="#impact" data-i18n="footer-co-1">Impact</a></li>
+        <li><a href="#" data-i18n="footer-co-2">Team</a></li>
+        <li><a href="#" data-i18n="footer-co-3">Careers</a></li>
+        <li><a href="#" data-i18n="footer-co-4">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="copy-row">
+    <span>© 2026 PowerX OneWallet</span>
+    <span>0xPOWERX · ONE-PAGER · 2026</span>
+  </div>
+</footer>
+
+<script>
+  // Scroll progress
+  const progress = document.getElementById('progress');
+  const nav = document.getElementById('nav');
+  const spotlight = document.getElementById('spotlight');
+  const orbs = document.querySelectorAll('.orb');
+
+  function onScroll() {
+    const h = document.documentElement;
+    const scrollTop = h.scrollTop || document.body.scrollTop;
+    const max = h.scrollHeight - h.clientHeight;
+    const pct = (scrollTop / max) * 100;
+    progress.style.width = pct + '%';
+
+    if (scrollTop > 30) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+
+    // Parallax orbs
+    orbs.forEach(o => {
+      const speed = parseFloat(o.dataset.parallax) || 0.3;
+      o.style.transform = `translateY(${-scrollTop * speed}px)`;
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Spotlight cursor (desktop only)
+  if (window.matchMedia('(pointer: fine)').matches) {
+    let tx = window.innerWidth / 2, ty = window.innerHeight / 2;
+    let cx = tx, cy = ty;
+    document.addEventListener('mousemove', e => {
+      tx = e.clientX; ty = e.clientY;
+    });
+    function tick() {
+      cx += (tx - cx) * 0.08;
+      cy += (ty - cy) * 0.08;
+      spotlight.style.transform = `translate(${cx}px, ${cy}px) translate(-50%, -50%)`;
+      requestAnimationFrame(tick);
+    }
+    tick();
+  } else {
+    spotlight.style.display = 'none';
+  }
+
+  // Reveal on scroll
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+
+        // Counter animation
+        const counters = e.target.querySelectorAll('[data-counter]');
+        counters.forEach(c => animateCounter(c));
+
+        // Fill bars
+        const fills = e.target.querySelectorAll('[data-fill]');
+        fills.forEach(f => f.style.height = f.dataset.fill);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
+
+  document.querySelectorAll('.reveal, .reveal-x, .reveal-scale').forEach(el => io.observe(el));
+
+  // Hero counters fire immediately
+  setTimeout(() => {
+    document.querySelectorAll('.hero [data-counter]').forEach(c => animateCounter(c));
+  }, 800);
+
+  // Tokenomics donut animation
+  const donutSegs = document.querySelectorAll('.tok-donut circle.seg');
+  if (donutSegs.length) {
+    const C = 2 * Math.PI * 75; // r = 75
+    const donutObs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        donutSegs.forEach((seg, i) => {
+          const pct = parseFloat(seg.dataset.pct);
+          const offset = parseFloat(seg.dataset.offset);
+          const len = (pct/100) * C;
+          const startOffset = -(offset/100) * C;
+          seg.style.strokeDasharray = `0 ${C}`;
+          seg.style.strokeDashoffset = startOffset;
+          setTimeout(() => {
+            seg.style.transition = 'stroke-dasharray 1.2s cubic-bezier(.2,.7,.2,1)';
+            seg.style.strokeDasharray = `${len} ${C}`;
+          }, 100 + i * 180);
+        });
+        donutObs.disconnect();
+      });
+    }, { threshold: 0.3 });
+    donutObs.observe(document.querySelector('.tok-donut-wrap'));
+  }
+
+  // Use of Funds bar animation
+  const uofSegs = document.querySelectorAll('.uof-seg');
+  if (uofSegs.length) {
+    const uofObs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        uofSegs.forEach((s, i) => {
+          setTimeout(() => { s.style.width = s.dataset.w; }, 200 + i * 200);
+        });
+        uofObs.disconnect();
+      });
+    }, { threshold: 0.4 });
+    uofObs.observe(document.querySelector('.uof-bar'));
+  }
+
+  // Live simulator
+  const simSlider = document.getElementById('simSlider');
+  if (simSlider) {
+    const simAmt = document.getElementById('simAmt');
+    const valTok = document.getElementById('valTok');
+    const valR2 = document.getElementById('valR2');
+    const valAnn = document.getElementById('valAnn');
+    const valTot = document.getElementById('valTot');
+    const multTot = document.getElementById('multTot');
+    const barTok = document.getElementById('barTok');
+    const barR2 = document.getElementById('barR2');
+    const barAnn = document.getElementById('barAnn');
+    const barTot = document.getElementById('barTot');
+    const fmt = n => '$' + Math.round(n).toLocaleString();
+    function updateSim() {
+      const inv = parseInt(simSlider.value);
+      const max = parseInt(simSlider.max);
+      const tokens = inv / 0.00125;
+      const r2 = inv * 4;
+      const ann = inv * 1.20;
+      const total = r2 + ann;
+      const mult = (total / inv).toFixed(1);
+      simAmt.textContent = fmt(inv);
+      valTok.textContent = (tokens / 1e6).toFixed(1).replace(/\.0$/, '') + 'M PWX';
+      valR2.textContent = fmt(r2);
+      valAnn.textContent = fmt(ann);
+      valTot.textContent = fmt(total);
+      multTot.textContent = mult + '× in year one';
+      const pct = (inv / max) * 100;
+      barTok.style.width = pct + '%';
+      barR2.style.width = (pct * 0.95) + '%';
+      barAnn.style.width = (pct * 0.7) + '%';
+      barTot.style.width = '100%';
+      const sliderPct = ((inv - simSlider.min) / (max - simSlider.min)) * 100;
+      simSlider.style.backgroundSize = sliderPct + '% 100%';
+    }
+    simSlider.addEventListener('input', updateSim);
+    updateSim();
+  }
+
+  function animateCounter(el) {
+    if (el.dataset.done) return;
+    el.dataset.done = '1';
+    const target = parseFloat(el.dataset.counter);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    const dur = 1400;
+    const start = performance.now();
+    function frame(t) {
+      const k = Math.min(1, (t - start) / dur);
+      const eased = 1 - Math.pow(1 - k, 3);
+      const v = target * eased;
+      let display;
+      if (target >= 1000) {
+        display = Math.round(v).toLocaleString();
+      } else if (Number.isInteger(target)) {
+        display = Math.round(v).toString();
+      } else {
+        display = v.toFixed(2);
+      }
+      el.textContent = prefix + display + suffix;
+      if (k < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // Smooth scroll for anchors
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href');
+      if (id.length <= 1) return;
+      const tgt = document.querySelector(id);
+      if (tgt) {
+        e.preventDefault();
+        window.scrollTo({ top: tgt.offsetTop - 60, behavior: 'smooth' });
+      }
+    });
+  });
+
+  // ── Language Switcher ─────────────────────────────────────────────────────
+  const LANG_META = {
+    en: { flag: '🇺🇸', code: 'EN' },
+    vi: { flag: '🇻🇳', code: 'VI' },
+    zh: { flag: '🇨🇳', code: 'ZH' },
+    ja: { flag: '🇯🇵', code: 'JA' },
+    ko: { flag: '🇰🇷', code: 'KO' },
+  };
+
+  const T = {
+    en: {
+      'nav-vision':'Vision','nav-product':'Product','nav-creators':'Creators','nav-round':'Round','nav-impact':'Impact','nav-cta':'Founders Round',
+      'hero-eyebrow':'Investor One-Pager · 2026','hero-h1-1':'The global','hero-h1-2':'super wallet','hero-h1-3':'for Web3.',
+      'hero-lead':'One app where social, creators and finance converge — a self-custodial wallet, social feed, chat, video and exchange under a single identity.',
+      'hero-cta-primary':'Join Founders Round','hero-cta-ghost':'See the product',
+      'hero-stat-round-l':'Round 1 Raise','hero-stat-token-l':'Token Price','hero-stat-alloc-l':'Allocation','hero-stat-mult-l':'Public Multiple',
+      'prob-eyebrow':'The Vision','prob-sub':'Web2 social platforms own your audience, your content, and your earnings. We\'re rebuilding the stack — one wallet, one identity, one ecosystem.',
+      'prob-h2':'Platforms capture all the value.<br><span class="grad-violet-text">Creators don\'t.</span>',
+      'prob-card-eye':'The Problem','prob-card-h2':'Three silos.<br>One losing creator.',
+      'prob-li-1':'Centralized platforms <strong style="color:var(--ink)">own user data</strong> &amp; audiences — and rent them back to you.',
+      'prob-li-2':'Creator monetization is <strong style="color:var(--ink)">fragmented &amp; slow</strong>: 5+ tools, weeks-long payouts.',
+      'prob-li-3':'Content and payments live in <strong style="color:var(--ink)">separate silos</strong> — value leaks at every hop.',
+      'sol-card-eye':'Our Solution','sol-card-h2':'One ecosystem.<br><span class="grad-violet-text">One super wallet.</span>',
+      'sol-li-1':'Social feed · chat · video · exchange — <strong style="color:var(--ink)">unified under one identity</strong>.',
+      'sol-li-2':'Self-custodial wallet <strong style="color:var(--ink)">built into every interaction</strong> — tip, post, swap, earn.',
+      'sol-li-3':'Creators earn <strong style="color:var(--ink)">directly from fans</strong> — instant token payouts, no middleman.',
+      'prod-eyebrow':'Product · 4 Pillars','prod-h2':'A complete app.<br>Not a feature.',
+      'prod-sub':'Every primitive of the modern internet, native to crypto and your wallet — from the moment you open the app.',
+      'pillar-1-num':'01 — SOCIAL','pillar-1-h3':'Social Feed','pillar-1-p':'Algorithm-free feed where every post, like and follow is yours. Owned on-chain. No pay-to-reach.',
+      'pillar-1-li-1':'Follow &amp; post','pillar-1-li-2':'On-chain ownership','pillar-1-li-3':'No black-box ranking',
+      'pillar-2-num':'02 — CHAT','pillar-2-h3':'Native Chat','pillar-2-p':'1-on-1 and group conversations with built-in tipping, NFT sends, and token gifting — without leaving the thread.',
+      'pillar-2-li-1':'1:1 &amp; group threads','pillar-2-li-2':'Native tipping','pillar-2-li-3':'Send NFTs &amp; tokens',
+      'pillar-3-num':'03 — VIDEO','pillar-3-h3':'Video Scroll','pillar-3-p':'Short and long-form, monetized day one. Earn from views with built-in tipping baked into every play.',
+      'pillar-3-li-1':'Short &amp; long-form','pillar-3-li-2':'Earn from views','pillar-3-li-3':'Built-in tipping',
+      'pillar-4-num':'04 — WALLET','pillar-4-h3':'Wallet &amp; Exchange','pillar-4-p':'Self-custodial wallet with send, stake, swap and trading — every action in social happens through it.',
+      'pillar-4-li-1':'Self-custodial','pillar-4-li-2':'Send · stake · swap','pillar-4-li-3':'Trade in-app',
+      'creators-eyebrow':'Creators · Business Model','creators-h2':'Where creators <span class="grad-magenta-text">win.</span>',
+      'creators-sub':'Creators keep their audience and their earnings. We capture value through the financial layer — not by taxing reach.',
+      'creators-card-h3':'Built for the people who build the network.',
+      'creators-stat-1-lbl':'Avg. Followers','creators-stat-2-lbl':'Avg. Earnings / mo',
+      'creators-li-1':'On-chain creator profiles &amp; portable reputation','creators-li-2':'Tips &amp; subs — instant token payouts',
+      'creators-li-3':'Engagement rewards: creators &amp; fans both earn','creators-li-4':'Live + short-form video monetized day one',
+      'creators-li-5':'Algorithm-free feed: no pay-to-reach','creators-li-6':'NFT drops native to every profile',
+      'biz-eyebrow':'Business Model','biz-h3':'Four revenue streams.','biz-sub':'Diversified, on-chain, scaling with the network.',
+      'biz-li-1-txt':'<strong>Transaction fees</strong> on every payment &amp; trade',
+      'biz-li-2-txt':'<strong>Premium subscriptions</strong> &amp; pro creator tools',
+      'biz-li-3-txt':'<strong>Cut of creator subs</strong> &amp; tipping pools',
+      'biz-li-4-txt':'<strong>Financial services:</strong> staking, swaps, markets',
+      'round-eyebrow':'$ Founders Round — Open Now','round-h2':'Get in at the <span class="grad-violet-text">earliest entry.</span>',
+      'round-sub':'$500K cap. $25K minimum. The lowest token price you\'ll ever see — before Round 2 marks 4× and public mints at 8×.',
+      'round-cell-1-lbl':'Round 1 Raise','round-cell-1-sub':'Hard cap','round-cell-2-lbl':'Min Investment','round-cell-2-sub':'Per investor',
+      'round-cell-3-lbl':'Token Price','round-cell-3-sub':'Founders entry','round-cell-4-lbl':'Allocation','round-cell-4-sub':'Of total supply',
+      'round-reserve':'Reserve allocation',
+      'sim-h3':'Live Investor Simulation','sim-p':'Drag to size your stack — watch the numbers grow.','sim-lbl':'Your investment',
+      'sim-tok-l':'Tokens received','sim-tok-rate':'@ $0.00125','sim-r2-l':'Value at Round 2','sim-r2-rate':'$0.005 · 4×',
+      'sim-ann-l':'Annual revenue','sim-ann-rate':'~120% APY','sim-tot-l':'Total value after 1 year','sim-mult-pub':'8× at public ($0.01)',
+      'tok-eyebrow':'Tokenomics','tok-h2':'Built for the <span class="grad-violet-text">community</span>.','tok-sub':'60% of supply goes back to users and creators. Founders, team and treasury are minority stakeholders by design.',
+      'tok-center-lbl':'PWX Token','tok-center-sub':'Total Supply',
+      'tok-1-name':'Community','tok-1-desc':'Rewards, airdrops, creator pools, ecosystem grants.',
+      'tok-2-name':'Founders Round','tok-2-desc':'Open now. Earliest entry at $0.00125.',
+      'tok-3-name':'Public Round','tok-3-desc':'TGE listing at $0.01 · 8× founders price.',
+      'tok-4-name':'Team','tok-4-desc':'Vested 4 years · 12-month cliff.',
+      'tok-5-name':'Treasury','tok-5-desc':'Reserves for partnerships &amp; ecosystem ops.',
+      'uof-eyebrow':'Use of Funds','uof-h3':'Where the $500K goes.','uof-sub':'Capital deployment plan for Founders Round proceeds.',
+      'uof-seg-tech':'Tech','uof-seg-mkt':'Marketing','uof-seg-liq':'Liquidity &amp; RWA',
+      'uof-card-tech-lbl':'Tech · 10%','uof-card-tech-desc':'Engineering, infrastructure, security audits and product development.',
+      'uof-card-mkt-lbl':'Marketing · 30%','uof-card-mkt-desc':'Creator partnerships, launch campaigns, community growth.',
+      'uof-card-liq-lbl':'Liquidity &amp; RWA · 60%','uof-card-liq-desc':'DEX liquidity provisioning and real-world-asset backing for the treasury.',
+      'impact-eyebrow':'Built-in impact','impact-h2':'Every fee, <span style="color: var(--mint);">a little better.</span>',
+      'impact-sub':'2% of every fee goes to charity — building hospitals and access to education. Fully on-chain, fully tracked.',
+      'impact-pct-lbl':'Of every fee · forever','impact-text-h3':'Profit and purpose, on the same chain.',
+      'impact-text-p':'We don\'t believe responsibility should be a press release. Every transaction in the PowerX ecosystem routes 2% to verified initiatives — auditable, transparent, on-chain.',
+      'impact-mini-1-v':'Hospitals','impact-mini-1-l':'Healthcare access','impact-mini-2-v':'Schools','impact-mini-2-l':'Education programs','impact-mini-3-v':'Verified','impact-mini-3-l':'On-chain audit',
+      'cta-eyebrow':'The next billion users','cta-h2':'The global super wallet<br><span class="grad-violet-text">for Web3.</span>',
+      'cta-p':'Social and finance converge. Creators own their value. Built for the next billion users — and the founders who get there first.',
+      'cta-primary':'Reserve $25K allocation','cta-ghost':'Read the whitepaper',
+      'cta-stat-1-l':'Round 1','cta-stat-2-l':'Min ticket','cta-stat-3-l':'Round 2 multiple','cta-stat-4-l':'Public multiple',
+      'footer-brand-p':'The global super wallet for Web3. Social, creators and finance — under one identity.',
+      'footer-prod-h5':'Product','footer-prod-1':'Social Feed','footer-prod-2':'Chat','footer-prod-3':'Video','footer-prod-4':'Wallet &amp; Exchange',
+      'footer-inv-h5':'Investors','footer-inv-1':'Founders Round','footer-inv-2':'Whitepaper','footer-inv-3':'Tokenomics','footer-inv-4':'Roadmap',
+      'footer-co-h5':'Company','footer-co-1':'Impact','footer-co-2':'Team','footer-co-3':'Careers','footer-co-4':'Contact',
+    },
+
+    vi: {
+      'nav-vision':'Tầm nhìn','nav-product':'Sản phẩm','nav-creators':'Sáng tạo','nav-round':'Vòng đầu tư','nav-impact':'Tác động','nav-cta':'Vòng Sáng Lập',
+      'hero-eyebrow':'Thư gửi nhà đầu tư · 2026','hero-h1-1':'Ví siêu','hero-h1-2':'toàn cầu','hero-h1-3':'cho Web3.',
+      'hero-lead':'Một ứng dụng hợp nhất mạng xã hội, sáng tạo nội dung và tài chính — ví tự quản lý, mạng xã hội, chat, video và sàn giao dịch dưới một danh tính duy nhất.',
+      'hero-cta-primary':'Tham gia Vòng Sáng Lập','hero-cta-ghost':'Xem sản phẩm',
+      'hero-stat-round-l':'Vòng 1 gọi vốn','hero-stat-token-l':'Giá token','hero-stat-alloc-l':'Phân bổ','hero-stat-mult-l':'Bội số công khai',
+      'prob-eyebrow':'Tầm nhìn','prob-sub':'Các nền tảng mạng xã hội Web2 sở hữu khán giả, nội dung và thu nhập của bạn. Chúng tôi xây dựng lại hệ thống — một ví, một danh tính, một hệ sinh thái.',
+      'prob-h2':'Nền tảng chiếm toàn bộ giá trị.<br><span class="grad-violet-text">Người sáng tạo thì không.</span>',
+      'prob-card-eye':'Vấn đề','prob-card-h2':'Ba nền tảng riêng lẻ.<br>Một người sáng tạo thua cuộc.',
+      'prob-li-1':'Các nền tảng tập trung <strong style="color:var(--ink)">sở hữu dữ liệu người dùng</strong> &amp; khán giả — và cho thuê lại cho bạn.',
+      'prob-li-2':'Kiếm tiền từ sáng tạo <strong style="color:var(--ink)">phân mảnh &amp; chậm chạp</strong>: 5+ công cụ, thanh toán mất nhiều tuần.',
+      'prob-li-3':'Nội dung và thanh toán tồn tại trong <strong style="color:var(--ink)">các nền tảng riêng biệt</strong> — giá trị bị mất ở mỗi bước.',
+      'sol-card-eye':'Giải pháp của chúng tôi','sol-card-h2':'Một hệ sinh thái.<br><span class="grad-violet-text">Một ví siêu việt.</span>',
+      'sol-li-1':'Mạng xã hội · chat · video · sàn giao dịch — <strong style="color:var(--ink)">hợp nhất dưới một danh tính</strong>.',
+      'sol-li-2':'Ví tự quản lý <strong style="color:var(--ink)">tích hợp vào mọi tương tác</strong> — tip, đăng, hoán đổi, kiếm tiền.',
+      'sol-li-3':'Người sáng tạo kiếm tiền <strong style="color:var(--ink)">trực tiếp từ người hâm mộ</strong> — thanh toán token ngay lập tức, không qua trung gian.',
+      'prod-eyebrow':'Sản phẩm · 4 Trụ cột','prod-h2':'Ứng dụng hoàn chỉnh.<br>Không chỉ là tính năng.',
+      'prod-sub':'Mọi nền tảng của internet hiện đại, tích hợp cho tiền mã hóa và ví của bạn — ngay từ khi mở ứng dụng.',
+      'pillar-1-num':'01 — MẠNG XÃ HỘI','pillar-1-h3':'Mạng xã hội','pillar-1-p':'Nguồn cấp không thuật toán, mọi bài đăng và theo dõi đều thuộc về bạn. Sở hữu trên blockchain. Không cần trả tiền để tiếp cận.',
+      'pillar-1-li-1':'Theo dõi &amp; đăng bài','pillar-1-li-2':'Sở hữu trên blockchain','pillar-1-li-3':'Không xếp hạng hộp đen',
+      'pillar-2-num':'02 — CHAT','pillar-2-h3':'Chat Tích hợp','pillar-2-p':'Cuộc trò chuyện 1-1 và nhóm với tip tích hợp, gửi NFT và tặng token — không cần rời khỏi cuộc trò chuyện.',
+      'pillar-2-li-1':'Nhóm &amp; 1:1','pillar-2-li-2':'Tip tích hợp','pillar-2-li-3':'Gửi NFT &amp; token',
+      'pillar-3-num':'03 — VIDEO','pillar-3-h3':'Video Cuộn','pillar-3-p':'Video ngắn và dài, kiếm tiền ngay ngày đầu. Kiếm từ lượt xem với tip tích hợp trong mỗi lần phát.',
+      'pillar-3-li-1':'Video ngắn &amp; dài','pillar-3-li-2':'Kiếm từ lượt xem','pillar-3-li-3':'Tip tích hợp',
+      'pillar-4-num':'04 — VÍ','pillar-4-h3':'Ví &amp; Sàn giao dịch','pillar-4-p':'Ví tự quản lý với gửi, stake, hoán đổi và giao dịch — mọi hành động trên mạng xã hội đều thông qua ví.',
+      'pillar-4-li-1':'Tự quản lý','pillar-4-li-2':'Gửi · stake · hoán đổi','pillar-4-li-3':'Giao dịch trong ứng dụng',
+      'creators-eyebrow':'Sáng tạo · Mô hình kinh doanh','creators-h2':'Nơi người sáng tạo <span class="grad-magenta-text">chiến thắng.</span>',
+      'creators-sub':'Người sáng tạo giữ khán giả và thu nhập. Chúng tôi tạo ra giá trị thông qua lớp tài chính — không đánh thuế độ tiếp cận.',
+      'creators-card-h3':'Được xây dựng cho những người xây dựng mạng lưới.',
+      'creators-stat-1-lbl':'Trung bình người theo dõi','creators-stat-2-lbl':'Thu nhập trung bình / tháng',
+      'creators-li-1':'Hồ sơ sáng tạo trên blockchain &amp; danh tiếng di động','creators-li-2':'Tip &amp; đăng ký — thanh toán token ngay lập tức',
+      'creators-li-3':'Phần thưởng tương tác: người sáng tạo &amp; người hâm mộ cùng kiếm','creators-li-4':'Video trực tiếp + ngắn kiếm tiền ngay ngày đầu',
+      'creators-li-5':'Nguồn cấp không thuật toán: không cần trả tiền để tiếp cận','creators-li-6':'NFT drop tích hợp trong mọi hồ sơ',
+      'biz-eyebrow':'Mô hình kinh doanh','biz-h3':'Bốn nguồn doanh thu.','biz-sub':'Đa dạng, trên blockchain, tăng trưởng cùng mạng lưới.',
+      'biz-li-1-txt':'<strong>Phí giao dịch</strong> trên mọi thanh toán &amp; giao dịch',
+      'biz-li-2-txt':'<strong>Đăng ký cao cấp</strong> &amp; công cụ sáng tạo chuyên nghiệp',
+      'biz-li-3-txt':'<strong>Phần trăm đăng ký</strong> &amp; pool tip của người sáng tạo',
+      'biz-li-4-txt':'<strong>Dịch vụ tài chính:</strong> stake, hoán đổi, thị trường',
+      'round-eyebrow':'$ Vòng Sáng Lập — Đang mở','round-h2':'Tham gia ở <span class="grad-violet-text">giai đoạn sớm nhất.</span>',
+      'round-sub':'Giới hạn $500K. Tối thiểu $25K. Giá token thấp nhất bạn từng thấy — trước khi Vòng 2 tăng 4× và công khai ở mức 8×.',
+      'round-cell-1-lbl':'Vòng 1 gọi vốn','round-cell-1-sub':'Giới hạn cứng','round-cell-2-lbl':'Đầu tư tối thiểu','round-cell-2-sub':'Mỗi nhà đầu tư',
+      'round-cell-3-lbl':'Giá Token','round-cell-3-sub':'Giá vào vòng sáng lập','round-cell-4-lbl':'Phân bổ','round-cell-4-sub':'Tổng cung',
+      'round-reserve':'Đặt chỗ phân bổ',
+      'sim-h3':'Mô phỏng đầu tư trực tiếp','sim-p':'Kéo để tính toán khoản đầu tư — xem con số tăng trưởng.','sim-lbl':'Khoản đầu tư của bạn',
+      'sim-tok-l':'Token nhận được','sim-tok-rate':'@ $0.00125','sim-r2-l':'Giá trị tại Vòng 2','sim-r2-rate':'$0.005 · 4×',
+      'sim-ann-l':'Doanh thu hàng năm','sim-ann-rate':'~120% APY','sim-tot-l':'Tổng giá trị sau 1 năm','sim-mult-pub':'8× khi công khai ($0.01)',
+      'tok-eyebrow':'Tokenomics','tok-h2':'Được xây dựng cho <span class="grad-violet-text">cộng đồng</span>.','tok-sub':'60% cung cấp cho người dùng và người sáng tạo. Người sáng lập, đội ngũ và kho bạc là cổ đông thiểu số.',
+      'tok-center-lbl':'Token PWX','tok-center-sub':'Tổng cung',
+      'tok-1-name':'Cộng đồng','tok-1-desc':'Phần thưởng, airdrop, pool sáng tạo, tài trợ hệ sinh thái.',
+      'tok-2-name':'Vòng Sáng Lập','tok-2-desc':'Đang mở. Giá vào sớm nhất $0.00125.',
+      'tok-3-name':'Vòng Công khai','tok-3-desc':'Niêm yết TGE tại $0.01 · 8× giá sáng lập.',
+      'tok-4-name':'Đội ngũ','tok-4-desc':'Vest 4 năm · Khóa 12 tháng.',
+      'tok-5-name':'Kho bạc','tok-5-desc':'Dự trữ cho đối tác &amp; vận hành hệ sinh thái.',
+      'uof-eyebrow':'Sử dụng vốn','uof-h3':'$500K sẽ đi đâu.','uof-sub':'Kế hoạch triển khai vốn cho Vòng Sáng Lập.',
+      'uof-seg-tech':'Công nghệ','uof-seg-mkt':'Marketing','uof-seg-liq':'Thanh khoản &amp; RWA',
+      'uof-card-tech-lbl':'Công nghệ · 10%','uof-card-tech-desc':'Kỹ thuật, cơ sở hạ tầng, kiểm toán bảo mật và phát triển sản phẩm.',
+      'uof-card-mkt-lbl':'Marketing · 30%','uof-card-mkt-desc':'Hợp tác người sáng tạo, chiến dịch ra mắt, tăng trưởng cộng đồng.',
+      'uof-card-liq-lbl':'Thanh khoản &amp; RWA · 60%','uof-card-liq-desc':'Cung cấp thanh khoản DEX và tài sản thực hỗ trợ kho bạc.',
+      'impact-eyebrow':'Tác động tích hợp','impact-h2':'Mỗi phí, <span style="color: var(--mint);">một chút tốt hơn.</span>',
+      'impact-sub':'2% mỗi phí đi vào từ thiện — xây bệnh viện và tiếp cận giáo dục. Hoàn toàn trên blockchain, hoàn toàn minh bạch.',
+      'impact-pct-lbl':'Mỗi phí · mãi mãi','impact-text-h3':'Lợi nhuận và mục đích, trên cùng một blockchain.',
+      'impact-text-p':'Chúng tôi không tin trách nhiệm nên là thông cáo báo chí. Mỗi giao dịch trong hệ sinh thái PowerX chuyển 2% đến các sáng kiến đã được xác minh — có thể kiểm toán, minh bạch, trên blockchain.',
+      'impact-mini-1-v':'Bệnh viện','impact-mini-1-l':'Tiếp cận y tế','impact-mini-2-v':'Trường học','impact-mini-2-l':'Chương trình giáo dục','impact-mini-3-v':'Đã xác minh','impact-mini-3-l':'Kiểm toán blockchain',
+      'cta-eyebrow':'Một tỷ người dùng tiếp theo','cta-h2':'Ví siêu toàn cầu<br><span class="grad-violet-text">cho Web3.</span>',
+      'cta-p':'Mạng xã hội và tài chính hội tụ. Người sáng tạo sở hữu giá trị của họ. Được xây dựng cho một tỷ người dùng tiếp theo — và những người sáng lập đến đầu tiên.',
+      'cta-primary':'Đặt chỗ phân bổ $25K','cta-ghost':'Đọc whitepaper',
+      'cta-stat-1-l':'Vòng 1','cta-stat-2-l':'Vé tối thiểu','cta-stat-3-l':'Bội số Vòng 2','cta-stat-4-l':'Bội số công khai',
+      'footer-brand-p':'Ví siêu toàn cầu cho Web3. Mạng xã hội, người sáng tạo và tài chính — dưới một danh tính.',
+      'footer-prod-h5':'Sản phẩm','footer-prod-1':'Mạng xã hội','footer-prod-2':'Chat','footer-prod-3':'Video','footer-prod-4':'Ví &amp; Sàn giao dịch',
+      'footer-inv-h5':'Nhà đầu tư','footer-inv-1':'Vòng Sáng Lập','footer-inv-2':'Whitepaper','footer-inv-3':'Tokenomics','footer-inv-4':'Lộ trình',
+      'footer-co-h5':'Công ty','footer-co-1':'Tác động','footer-co-2':'Đội ngũ','footer-co-3':'Tuyển dụng','footer-co-4':'Liên hệ',
+    },
+
+    zh: {
+      'nav-vision':'愿景','nav-product':'产品','nav-creators':'创作者','nav-round':'融资轮次','nav-impact':'影响','nav-cta':'创始人轮次',
+      'hero-eyebrow':'投资人简报 · 2026','hero-h1-1':'全球','hero-h1-2':'超级钱包','hero-h1-3':'for Web3.',
+      'hero-lead':'一个应用融合社交、创作者与金融 — 自托管钱包、社交动态、聊天、视频和交易所，统一在单一身份下。',
+      'hero-cta-primary':'加入创始人轮次','hero-cta-ghost':'查看产品',
+      'hero-stat-round-l':'第一轮融资','hero-stat-token-l':'代币价格','hero-stat-alloc-l':'分配比例','hero-stat-mult-l':'公开倍数',
+      'prob-eyebrow':'愿景','prob-sub':'Web2 社交平台拥有您的受众、内容和收益。我们正在重建这个体系 — 一个钱包，一个身份，一个生态系统。',
+      'prob-h2':'平台获得了所有价值。<br><span class="grad-violet-text">创作者没有。</span>',
+      'prob-card-eye':'问题','prob-card-h2':'三个孤岛。<br>一个失败的创作者。',
+      'prob-li-1':'中心化平台<strong style="color:var(--ink)">拥有用户数据</strong>和受众 — 并将其出租给你。',
+      'prob-li-2':'创作者变现<strong style="color:var(--ink)">碎片化且缓慢</strong>：5+ 工具，数周结算。',
+      'prob-li-3':'内容与支付存在于<strong style="color:var(--ink)">独立的孤岛</strong>中 — 价值在每个环节流失。',
+      'sol-card-eye':'我们的解决方案','sol-card-h2':'一个生态系统。<br><span class="grad-violet-text">一个超级钱包。</span>',
+      'sol-li-1':'社交动态 · 聊天 · 视频 · 交易所 — <strong style="color:var(--ink)">统一在单一身份下</strong>。',
+      'sol-li-2':'自托管钱包<strong style="color:var(--ink)">内置于每次互动</strong> — 打赏、发布、兑换、赚取。',
+      'sol-li-3':'创作者<strong style="color:var(--ink)">直接从粉丝赚取</strong> — 即时代币支付，无中间商。',
+      'prod-eyebrow':'产品 · 4大支柱','prod-h2':'一个完整的应用。<br>不仅是功能。',
+      'prod-sub':'现代互联网的所有原语，原生于加密货币和您的钱包 — 从打开应用的那一刻起。',
+      'pillar-1-num':'01 — 社交','pillar-1-h3':'社交动态','pillar-1-p':'无算法动态，每条帖子、点赞和关注都属于你。链上所有权。无需付费获得覆盖。',
+      'pillar-1-li-1':'关注 &amp; 发布','pillar-1-li-2':'链上所有权','pillar-1-li-3':'无黑盒排名',
+      'pillar-2-num':'02 — 聊天','pillar-2-h3':'原生聊天','pillar-2-p':'一对一和群组对话，内置打赏、NFT 发送和代币赠送 — 无需离开聊天。',
+      'pillar-2-li-1':'1:1 &amp; 群组会话','pillar-2-li-2':'原生打赏','pillar-2-li-3':'发送 NFT &amp; 代币',
+      'pillar-3-num':'03 — 视频','pillar-3-h3':'视频滚动','pillar-3-p':'短视频和长视频，第一天即可变现。每次播放都有内置打赏，从观看中赚取。',
+      'pillar-3-li-1':'短视频 &amp; 长视频','pillar-3-li-2':'从观看中赚取','pillar-3-li-3':'内置打赏',
+      'pillar-4-num':'04 — 钱包','pillar-4-h3':'钱包 &amp; 交易所','pillar-4-p':'自托管钱包，支持发送、质押、兑换和交易 — 社交中的每个操作都通过它完成。',
+      'pillar-4-li-1':'自托管','pillar-4-li-2':'发送 · 质押 · 兑换','pillar-4-li-3':'应用内交易',
+      'creators-eyebrow':'创作者 · 商业模式','creators-h2':'创作者<span class="grad-magenta-text">胜利</span>的地方。',
+      'creators-sub':'创作者保留其受众和收益。我们通过金融层捕获价值 — 而不是对覆盖率征税。',
+      'creators-card-h3':'为建设网络的人而建。',
+      'creators-stat-1-lbl':'平均粉丝数','creators-stat-2-lbl':'平均月收入',
+      'creators-li-1':'链上创作者档案 &amp; 可携带声誉','creators-li-2':'打赏 &amp; 订阅 — 即时代币支付',
+      'creators-li-3':'互动奖励：创作者 &amp; 粉丝共同赚取','creators-li-4':'直播 + 短视频第一天即可变现',
+      'creators-li-5':'无算法动态：无需付费获得覆盖','creators-li-6':'NFT 发行原生于每个档案',
+      'biz-eyebrow':'商业模式','biz-h3':'四大收入来源。','biz-sub':'多元化、链上、随网络扩展。',
+      'biz-li-1-txt':'<strong>交易费用</strong>来自每笔付款 &amp; 交易',
+      'biz-li-2-txt':'<strong>高级订阅</strong> &amp; 专业创作者工具',
+      'biz-li-3-txt':'<strong>创作者订阅分成</strong> &amp; 打赏池',
+      'biz-li-4-txt':'<strong>金融服务：</strong>质押、兑换、市场',
+      'round-eyebrow':'$ 创始人轮次 — 现已开放','round-h2':'以<span class="grad-violet-text">最早的入场价</span>加入。',
+      'round-sub':'$50万上限。$2.5万最低投资。你见过的最低代币价格 — 在第二轮标价4×和公开8×之前。',
+      'round-cell-1-lbl':'第一轮融资','round-cell-1-sub':'硬性上限','round-cell-2-lbl':'最低投资','round-cell-2-sub':'每位投资者',
+      'round-cell-3-lbl':'代币价格','round-cell-3-sub':'创始人入场价','round-cell-4-lbl':'分配比例','round-cell-4-sub':'总供应量',
+      'round-reserve':'预留分配',
+      'sim-h3':'实时投资模拟器','sim-p':'拖动滑块调整投资金额 — 查看数字增长。','sim-lbl':'您的投资',
+      'sim-tok-l':'获得代币','sim-tok-rate':'@ $0.00125','sim-r2-l':'第二轮价值','sim-r2-rate':'$0.005 · 4×',
+      'sim-ann-l':'年度收益','sim-ann-rate':'~120% APY','sim-tot-l':'1年后总价值','sim-mult-pub':'公开 8× ($0.01)',
+      'tok-eyebrow':'代币经济','tok-h2':'为<span class="grad-violet-text">社区</span>而建。','tok-sub':'60%的供应回馈给用户和创作者。创始人、团队和国库是少数股东。',
+      'tok-center-lbl':'PWX 代币','tok-center-sub':'总供应量',
+      'tok-1-name':'社区','tok-1-desc':'奖励、空投、创作者池、生态系统资助。',
+      'tok-2-name':'创始人轮次','tok-2-desc':'现已开放。最早入场价 $0.00125。',
+      'tok-3-name':'公开轮次','tok-3-desc':'TGE 上市价 $0.01 · 创始人价格8×。',
+      'tok-4-name':'团队','tok-4-desc':'4年归属 · 12个月锁仓。',
+      'tok-5-name':'国库','tok-5-desc':'为合作伙伴 &amp; 生态系统运营的储备。',
+      'uof-eyebrow':'资金用途','uof-h3':'$50万的去向。','uof-sub':'创始人轮次收益的资金部署计划。',
+      'uof-seg-tech':'技术','uof-seg-mkt':'营销','uof-seg-liq':'流动性 &amp; RWA',
+      'uof-card-tech-lbl':'技术 · 10%','uof-card-tech-desc':'工程、基础设施、安全审计和产品开发。',
+      'uof-card-mkt-lbl':'营销 · 30%','uof-card-mkt-desc':'创作者合作、启动活动、社区增长。',
+      'uof-card-liq-lbl':'流动性 &amp; RWA · 60%','uof-card-liq-desc':'DEX 流动性供应和真实世界资产支持国库。',
+      'impact-eyebrow':'内置影响','impact-h2':'每一笔费用，<span style="color: var(--mint);">一点点更好。</span>',
+      'impact-sub':'每笔费用的2%用于慈善 — 建设医院和教育机会。完全链上，完全透明。',
+      'impact-pct-lbl':'每笔费用 · 永久','impact-text-h3':'利润与目标，在同一条链上。',
+      'impact-text-p':'我们不认为责任应该是新闻稿。PowerX 生态系统中的每笔交易将2%路由到经过验证的项目 — 可审计、透明、链上。',
+      'impact-mini-1-v':'医院','impact-mini-1-l':'医疗保健','impact-mini-2-v':'学校','impact-mini-2-l':'教育项目','impact-mini-3-v':'已验证','impact-mini-3-l':'链上审计',
+      'cta-eyebrow':'下一个十亿用户','cta-h2':'全球超级钱包<br><span class="grad-violet-text">for Web3.</span>',
+      'cta-p':'社交与金融融合。创作者拥有自己的价值。为下一个十亿用户而建 — 以及最先到达的创始人。',
+      'cta-primary':'预留 $2.5万分配','cta-ghost':'阅读白皮书',
+      'cta-stat-1-l':'第一轮','cta-stat-2-l':'最低门票','cta-stat-3-l':'第二轮倍数','cta-stat-4-l':'公开倍数',
+      'footer-brand-p':'全球超级钱包 for Web3。社交、创作者与金融 — 统一在单一身份下。',
+      'footer-prod-h5':'产品','footer-prod-1':'社交动态','footer-prod-2':'聊天','footer-prod-3':'视频','footer-prod-4':'钱包 &amp; 交易所',
+      'footer-inv-h5':'投资者','footer-inv-1':'创始人轮次','footer-inv-2':'白皮书','footer-inv-3':'代币经济','footer-inv-4':'路线图',
+      'footer-co-h5':'公司','footer-co-1':'影响','footer-co-2':'团队','footer-co-3':'招聘','footer-co-4':'联系我们',
+    },
+
+    ja: {
+      'nav-vision':'ビジョン','nav-product':'プロダクト','nav-creators':'クリエイター','nav-round':'投資ラウンド','nav-impact':'インパクト','nav-cta':'ファウンダーズラウンド',
+      'hero-eyebrow':'投資家向け資料 · 2026','hero-h1-1':'グローバル','hero-h1-2':'スーパーウォレット','hero-h1-3':'for Web3.',
+      'hero-lead':'ソーシャル、クリエイター、ファイナンスが融合する一つのアプリ — 自己管理ウォレット、ソーシャルフィード、チャット、動画、取引所を一つのIDの下に統合。',
+      'hero-cta-primary':'ファウンダーズラウンドに参加','hero-cta-ghost':'プロダクトを見る',
+      'hero-stat-round-l':'ラウンド1調達額','hero-stat-token-l':'トークン価格','hero-stat-alloc-l':'配分比率','hero-stat-mult-l':'公開倍率',
+      'prob-eyebrow':'ビジョン','prob-sub':'Web2のソーシャルプラットフォームはあなたのオーディエンス、コンテンツ、収益を所有しています。私たちはスタックを再構築します — 一つのウォレット、一つのID、一つのエコシステム。',
+      'prob-h2':'プラットフォームがすべての価値を獲得。<br><span class="grad-violet-text">クリエイターは得ていない。</span>',
+      'prob-card-eye':'問題','prob-card-h2':'3つのサイロ。<br>一人の負けるクリエイター。',
+      'prob-li-1':'中央集権的プラットフォームは<strong style="color:var(--ink)">ユーザーデータ</strong>とオーディエンスを所有 — そしてあなたに貸し出す。',
+      'prob-li-2':'クリエイターの収益化は<strong style="color:var(--ink)">断片化して遅い</strong>：5+ツール、数週間の支払い。',
+      'prob-li-3':'コンテンツと支払いは<strong style="color:var(--ink)">別々のサイロ</strong>に存在 — 価値は各ステップで漏れる。',
+      'sol-card-eye':'私たちの解決策','sol-card-h2':'一つのエコシステム。<br><span class="grad-violet-text">一つのスーパーウォレット。</span>',
+      'sol-li-1':'ソーシャルフィード · チャット · 動画 · 取引所 — <strong style="color:var(--ink)">一つのIDの下に統合</strong>。',
+      'sol-li-2':'自己管理ウォレットが<strong style="color:var(--ink)">あらゆるインタラクションに組み込まれ</strong> — チップ、投稿、スワップ、稼ぐ。',
+      'sol-li-3':'クリエイターは<strong style="color:var(--ink)">ファンから直接稼ぐ</strong> — 即時トークン支払い、中間業者なし。',
+      'prod-eyebrow':'プロダクト · 4つの柱','prod-h2':'完全なアプリ。<br>単なる機能ではない。',
+      'prod-sub':'現代インターネットのすべての基本要素、暗号通貨とウォレットにネイティブ — アプリを開いた瞬間から。',
+      'pillar-1-num':'01 — ソーシャル','pillar-1-h3':'ソーシャルフィード','pillar-1-p':'アルゴリズムフリーのフィード。あらゆる投稿、いいね、フォローはあなたのもの。オンチェーンで所有。ペイトゥーリーチなし。',
+      'pillar-1-li-1':'フォロー &amp; 投稿','pillar-1-li-2':'オンチェーン所有権','pillar-1-li-3':'ブラックボックスランキングなし',
+      'pillar-2-num':'02 — チャット','pillar-2-h3':'ネイティブチャット','pillar-2-p':'ビルトインチップ、NFT送信、トークンギフトを備えた1対1とグループ会話 — スレッドを離れることなく。',
+      'pillar-2-li-1':'1:1 &amp; グループスレッド','pillar-2-li-2':'ネイティブチップ','pillar-2-li-3':'NFT &amp; トークン送信',
+      'pillar-3-num':'03 — 動画','pillar-3-h3':'動画スクロール','pillar-3-p':'ショートとロングフォーム、初日から収益化。すべての再生にビルトインチップで視聴から稼ぐ。',
+      'pillar-3-li-1':'ショート &amp; ロングフォーム','pillar-3-li-2':'視聴から稼ぐ','pillar-3-li-3':'ビルトインチップ',
+      'pillar-4-num':'04 — ウォレット','pillar-4-h3':'ウォレット &amp; 取引所','pillar-4-p':'送金、ステーク、スワップ、トレードができる自己管理ウォレット — ソーシャルのあらゆるアクションを通じて。',
+      'pillar-4-li-1':'自己管理','pillar-4-li-2':'送金 · ステーク · スワップ','pillar-4-li-3':'アプリ内トレード',
+      'creators-eyebrow':'クリエイター · ビジネスモデル','creators-h2':'クリエイターが<span class="grad-magenta-text">勝つ</span>場所。',
+      'creators-sub':'クリエイターはオーディエンスと収益を保持します。私たちは金融レイヤーを通じて価値を獲得 — リーチへの課税ではなく。',
+      'creators-card-h3':'ネットワークを構築する人々のために。',
+      'creators-stat-1-lbl':'平均フォロワー数','creators-stat-2-lbl':'平均月間収益',
+      'creators-li-1':'オンチェーンクリエイタープロフィール &amp; ポータブル実績','creators-li-2':'チップ &amp; サブスク — 即時トークン支払い',
+      'creators-li-3':'エンゲージメント報酬：クリエイター &amp; ファンがともに稼ぐ','creators-li-4':'ライブ + ショートフォーム動画、初日から収益化',
+      'creators-li-5':'アルゴリズムフリーフィード：ペイトゥーリーチなし','creators-li-6':'NFTドロップ、あらゆるプロフィールにネイティブ',
+      'biz-eyebrow':'ビジネスモデル','biz-h3':'4つの収益源。','biz-sub':'多様化、オンチェーン、ネットワークとともに拡大。',
+      'biz-li-1-txt':'<strong>取引手数料</strong>（あらゆる支払い &amp; 取引）',
+      'biz-li-2-txt':'<strong>プレミアムサブスクリプション</strong> &amp; プロクリエイターツール',
+      'biz-li-3-txt':'<strong>クリエイターサブスク</strong> &amp; チッププールの一部',
+      'biz-li-4-txt':'<strong>金融サービス：</strong>ステーク、スワップ、マーケット',
+      'round-eyebrow':'$ ファウンダーズラウンド — 現在受付中','round-h2':'<span class="grad-violet-text">最も早い段階</span>で参加する。',
+      'round-sub':'$50万上限。$2.5万最低投資額。これまでで最も低いトークン価格 — ラウンド2が4×、公開が8×になる前に。',
+      'round-cell-1-lbl':'ラウンド1調達額','round-cell-1-sub':'ハードキャップ','round-cell-2-lbl':'最低投資額','round-cell-2-sub':'投資家1人あたり',
+      'round-cell-3-lbl':'トークン価格','round-cell-3-sub':'ファウンダーズ入場価格','round-cell-4-lbl':'配分比率','round-cell-4-sub':'総供給量の',
+      'round-reserve':'配分を予約する',
+      'sim-h3':'ライブ投資シミュレーター','sim-p':'スライダーで投資額を調整 — 数字が成長するのを見る。','sim-lbl':'あなたの投資額',
+      'sim-tok-l':'受け取るトークン','sim-tok-rate':'@ $0.00125','sim-r2-l':'ラウンド2での価値','sim-r2-rate':'$0.005 · 4×',
+      'sim-ann-l':'年間収益','sim-ann-rate':'~120% APY','sim-tot-l':'1年後の総価値','sim-mult-pub':'公開時8× ($0.01)',
+      'tok-eyebrow':'トークノミクス','tok-h2':'<span class="grad-violet-text">コミュニティ</span>のために。','tok-sub':'供給量の60%がユーザーとクリエイターに還元されます。ファウンダー、チーム、財務省は少数株主です。',
+      'tok-center-lbl':'PWXトークン','tok-center-sub':'総供給量',
+      'tok-1-name':'コミュニティ','tok-1-desc':'報酬、エアドロップ、クリエイタープール、エコシステム助成金。',
+      'tok-2-name':'ファウンダーズラウンド','tok-2-desc':'現在受付中。最も早い入場価格 $0.00125。',
+      'tok-3-name':'パブリックラウンド','tok-3-desc':'TGEリスティング価格 $0.01 · ファウンダーズ価格の8×。',
+      'tok-4-name':'チーム','tok-4-desc':'4年ベスティング · 12ヶ月クリフ。',
+      'tok-5-name':'トレジャリー','tok-5-desc':'パートナーシップ &amp; エコシステム運営のための準備金。',
+      'uof-eyebrow':'資金使途','uof-h3':'$50万の使い道。','uof-sub':'ファウンダーズラウンド資金の展開計画。',
+      'uof-seg-tech':'技術','uof-seg-mkt':'マーケティング','uof-seg-liq':'流動性 &amp; RWA',
+      'uof-card-tech-lbl':'技術 · 10%','uof-card-tech-desc':'エンジニアリング、インフラ、セキュリティ監査、プロダクト開発。',
+      'uof-card-mkt-lbl':'マーケティング · 30%','uof-card-mkt-desc':'クリエイターパートナーシップ、ローンチキャンペーン、コミュニティ成長。',
+      'uof-card-liq-lbl':'流動性 &amp; RWA · 60%','uof-card-liq-desc':'DEX流動性供給とトレジャリーの現実資産バッキング。',
+      'impact-eyebrow':'ビルトインインパクト','impact-h2':'すべての手数料、<span style="color: var(--mint);">少しずつ良くなる。</span>',
+      'impact-sub':'すべての手数料の2%が慈善へ — 病院建設と教育へのアクセス。完全オンチェーン、完全透明。',
+      'impact-pct-lbl':'すべての手数料から · 永遠に','impact-text-h3':'利益と目的、同じチェーンの上に。',
+      'impact-text-p':'私たちは責任がプレスリリースであるべきだとは考えません。PowerXエコシステムのすべての取引は2%を検証済みのイニシアチブに送ります — 監査可能、透明、オンチェーン。',
+      'impact-mini-1-v':'病院','impact-mini-1-l':'医療アクセス','impact-mini-2-v':'学校','impact-mini-2-l':'教育プログラム','impact-mini-3-v':'検証済み','impact-mini-3-l':'オンチェーン監査',
+      'cta-eyebrow':'次の10億人のユーザー','cta-h2':'グローバルスーパーウォレット<br><span class="grad-violet-text">for Web3.</span>',
+      'cta-p':'ソーシャルとファイナンスが融合。クリエイターは自分の価値を所有。次の10億人のユーザーのために — そして最初に到達するファウンダーのために。',
+      'cta-primary':'$2.5万配分を予約','cta-ghost':'ホワイトペーパーを読む',
+      'cta-stat-1-l':'ラウンド1','cta-stat-2-l':'最低チケット','cta-stat-3-l':'ラウンド2倍率','cta-stat-4-l':'公開倍率',
+      'footer-brand-p':'Web3のためのグローバルスーパーウォレット。ソーシャル、クリエイター、ファイナンス — 一つのIDの下に。',
+      'footer-prod-h5':'プロダクト','footer-prod-1':'ソーシャルフィード','footer-prod-2':'チャット','footer-prod-3':'動画','footer-prod-4':'ウォレット &amp; 取引所',
+      'footer-inv-h5':'投資家','footer-inv-1':'ファウンダーズラウンド','footer-inv-2':'ホワイトペーパー','footer-inv-3':'トークノミクス','footer-inv-4':'ロードマップ',
+      'footer-co-h5':'企業','footer-co-1':'インパクト','footer-co-2':'チーム','footer-co-3':'採用情報','footer-co-4':'お問い合わせ',
+    },
+
+    ko: {
+      'nav-vision':'비전','nav-product':'제품','nav-creators':'크리에이터','nav-round':'투자 라운드','nav-impact':'임팩트','nav-cta':'파운더스 라운드',
+      'hero-eyebrow':'투자자 원페이저 · 2026','hero-h1-1':'글로벌','hero-h1-2':'슈퍼 월렛','hero-h1-3':'for Web3.',
+      'hero-lead':'소셜, 크리에이터, 금융이 하나로 융합되는 앱 — 자기 수탁 지갑, 소셜 피드, 채팅, 동영상, 거래소를 하나의 정체성 아래 통합.',
+      'hero-cta-primary':'파운더스 라운드 참여','hero-cta-ghost':'제품 보기',
+      'hero-stat-round-l':'라운드 1 모금액','hero-stat-token-l':'토큰 가격','hero-stat-alloc-l':'배분 비율','hero-stat-mult-l':'공개 배수',
+      'prob-eyebrow':'비전','prob-sub':'Web2 소셜 플랫폼은 당신의 오디언스, 콘텐츠, 수익을 소유합니다. 우리는 스택을 재구축합니다 — 하나의 지갑, 하나의 정체성, 하나의 에코시스템.',
+      'prob-h2':'플랫폼이 모든 가치를 가져간다.<br><span class="grad-violet-text">크리에이터는 그렇지 않다.</span>',
+      'prob-card-eye':'문제','prob-card-h2':'세 개의 사일로.<br>한 명의 지는 크리에이터.',
+      'prob-li-1':'중앙화 플랫폼은 <strong style="color:var(--ink)">사용자 데이터</strong>와 오디언스를 소유 — 그리고 당신에게 임대한다.',
+      'prob-li-2':'크리에이터 수익화는 <strong style="color:var(--ink)">단편화되고 느리다</strong>: 5개+ 도구, 수 주의 정산.',
+      'prob-li-3':'콘텐츠와 결제는 <strong style="color:var(--ink)">분리된 사일로</strong>에 존재 — 가치는 매 단계에서 누수된다.',
+      'sol-card-eye':'우리의 솔루션','sol-card-h2':'하나의 에코시스템.<br><span class="grad-violet-text">하나의 슈퍼 월렛.</span>',
+      'sol-li-1':'소셜 피드 · 채팅 · 동영상 · 거래소 — <strong style="color:var(--ink)">하나의 정체성 아래 통합</strong>.',
+      'sol-li-2':'자기 수탁 지갑이 <strong style="color:var(--ink)">모든 상호작용에 내장</strong> — 팁, 게시, 스왑, 수익.',
+      'sol-li-3':'크리에이터는 <strong style="color:var(--ink)">팬에게서 직접 수익</strong> — 즉시 토큰 지급, 중개자 없음.',
+      'prod-eyebrow':'제품 · 4대 기둥','prod-h2':'완전한 앱.<br>단순 기능이 아닌.',
+      'prod-sub':'현대 인터넷의 모든 기본 요소, 암호화폐와 지갑에 네이티브 — 앱을 여는 순간부터.',
+      'pillar-1-num':'01 — 소셜','pillar-1-h3':'소셜 피드','pillar-1-p':'알고리즘 없는 피드, 모든 게시물, 좋아요, 팔로우는 당신 것. 온체인 소유권. 도달을 위한 비용 없음.',
+      'pillar-1-li-1':'팔로우 &amp; 게시','pillar-1-li-2':'온체인 소유권','pillar-1-li-3':'블랙박스 랭킹 없음',
+      'pillar-2-num':'02 — 채팅','pillar-2-h3':'네이티브 채팅','pillar-2-p':'내장 팁, NFT 전송, 토큰 선물 기능이 있는 1:1 및 그룹 대화 — 스레드를 벗어나지 않고.',
+      'pillar-2-li-1':'1:1 &amp; 그룹 스레드','pillar-2-li-2':'네이티브 팁','pillar-2-li-3':'NFT &amp; 토큰 전송',
+      'pillar-3-num':'03 — 동영상','pillar-3-h3':'동영상 스크롤','pillar-3-p':'숏폼과 롱폼, 첫날부터 수익화. 매 재생에 내장 팁으로 조회수에서 수익 창출.',
+      'pillar-3-li-1':'숏폼 &amp; 롱폼','pillar-3-li-2':'조회수에서 수익','pillar-3-li-3':'내장 팁',
+      'pillar-4-num':'04 — 월렛','pillar-4-h3':'월렛 &amp; 거래소','pillar-4-p':'전송, 스테이킹, 스왑, 트레이딩이 가능한 자기 수탁 지갑 — 소셜의 모든 활동이 이를 통해.',
+      'pillar-4-li-1':'자기 수탁','pillar-4-li-2':'전송 · 스테이킹 · 스왑','pillar-4-li-3':'앱 내 거래',
+      'creators-eyebrow':'크리에이터 · 비즈니스 모델','creators-h2':'크리에이터가 <span class="grad-magenta-text">이기는</span> 곳.',
+      'creators-sub':'크리에이터는 오디언스와 수익을 유지합니다. 우리는 금융 레이어를 통해 가치를 창출 — 도달률에 세금을 부과하지 않고.',
+      'creators-card-h3':'네트워크를 구축하는 사람들을 위해 만들었습니다.',
+      'creators-stat-1-lbl':'평균 팔로워','creators-stat-2-lbl':'평균 월 수익',
+      'creators-li-1':'온체인 크리에이터 프로필 &amp; 이동 가능한 평판','creators-li-2':'팁 &amp; 구독 — 즉시 토큰 지급',
+      'creators-li-3':'참여 보상: 크리에이터 &amp; 팬 모두 수익','creators-li-4':'라이브 + 숏폼 동영상 첫날부터 수익화',
+      'creators-li-5':'알고리즘 없는 피드: 도달을 위한 비용 없음','creators-li-6':'NFT 드롭, 모든 프로필에 네이티브',
+      'biz-eyebrow':'비즈니스 모델','biz-h3':'네 가지 수익원.','biz-sub':'다각화, 온체인, 네트워크와 함께 확장.',
+      'biz-li-1-txt':'<strong>거래 수수료</strong> (모든 결제 &amp; 거래)',
+      'biz-li-2-txt':'<strong>프리미엄 구독</strong> &amp; 프로 크리에이터 도구',
+      'biz-li-3-txt':'<strong>크리에이터 구독 분배</strong> &amp; 팁 풀',
+      'biz-li-4-txt':'<strong>금융 서비스:</strong> 스테이킹, 스왑, 마켓',
+      'round-eyebrow':'$ 파운더스 라운드 — 지금 오픈','round-h2':'<span class="grad-violet-text">가장 이른 단계</span>에 참여하세요.',
+      'round-sub':'$50만 한도. $2.5만 최소 투자. 역대 가장 낮은 토큰 가격 — 라운드 2가 4×, 공개가 8×가 되기 전에.',
+      'round-cell-1-lbl':'라운드 1 모금액','round-cell-1-sub':'하드 캡','round-cell-2-lbl':'최소 투자금','round-cell-2-sub':'투자자 1인당',
+      'round-cell-3-lbl':'토큰 가격','round-cell-3-sub':'파운더스 참여 가격','round-cell-4-lbl':'배분 비율','round-cell-4-sub':'총 공급량 대비',
+      'round-reserve':'배분 예약하기',
+      'sim-h3':'실시간 투자 시뮬레이터','sim-p':'슬라이더로 투자 규모를 설정 — 숫자가 성장하는 것을 확인하세요.','sim-lbl':'당신의 투자금',
+      'sim-tok-l':'받는 토큰','sim-tok-rate':'@ $0.00125','sim-r2-l':'라운드 2에서의 가치','sim-r2-rate':'$0.005 · 4×',
+      'sim-ann-l':'연간 수익','sim-ann-rate':'~120% APY','sim-tot-l':'1년 후 총 가치','sim-mult-pub':'공개 8× ($0.01)',
+      'tok-eyebrow':'토크노믹스','tok-h2':'<span class="grad-violet-text">커뮤니티</span>를 위해 만들다.','tok-sub':'공급량의 60%가 사용자와 크리에이터에게 돌아갑니다. 파운더, 팀, 재무는 소수 주주입니다.',
+      'tok-center-lbl':'PWX 토큰','tok-center-sub':'총 공급량',
+      'tok-1-name':'커뮤니티','tok-1-desc':'보상, 에어드롭, 크리에이터 풀, 에코시스템 보조금.',
+      'tok-2-name':'파운더스 라운드','tok-2-desc':'현재 오픈. 가장 이른 참여 가격 $0.00125.',
+      'tok-3-name':'퍼블릭 라운드','tok-3-desc':'TGE 상장가 $0.01 · 파운더스 가격의 8×.',
+      'tok-4-name':'팀','tok-4-desc':'4년 베스팅 · 12개월 클리프.',
+      'tok-5-name':'트레저리','tok-5-desc':'파트너십 &amp; 에코시스템 운영 준비금.',
+      'uof-eyebrow':'자금 사용 계획','uof-h3':'$50만의 사용처.','uof-sub':'파운더스 라운드 수익의 자금 배분 계획.',
+      'uof-seg-tech':'기술','uof-seg-mkt':'마케팅','uof-seg-liq':'유동성 &amp; RWA',
+      'uof-card-tech-lbl':'기술 · 10%','uof-card-tech-desc':'엔지니어링, 인프라, 보안 감사 및 제품 개발.',
+      'uof-card-mkt-lbl':'마케팅 · 30%','uof-card-mkt-desc':'크리에이터 파트너십, 런칭 캠페인, 커뮤니티 성장.',
+      'uof-card-liq-lbl':'유동성 &amp; RWA · 60%','uof-card-liq-desc':'DEX 유동성 공급 및 실물 자산 기반 재무 지원.',
+      'impact-eyebrow':'내장된 임팩트','impact-h2':'모든 수수료, <span style="color: var(--mint);">조금씩 더 나아지게.</span>',
+      'impact-sub':'모든 수수료의 2%가 자선으로 — 병원 건설과 교육 접근성. 완전 온체인, 완전 투명.',
+      'impact-pct-lbl':'모든 수수료에서 · 영원히','impact-text-h3':'이익과 목적, 같은 체인 위에.',
+      'impact-text-p':'우리는 책임이 보도자료여야 한다고 생각하지 않습니다. PowerX 에코시스템의 모든 거래는 2%를 검증된 이니셔티브로 라우팅합니다 — 감사 가능, 투명, 온체인.',
+      'impact-mini-1-v':'병원','impact-mini-1-l':'의료 접근성','impact-mini-2-v':'학교','impact-mini-2-l':'교육 프로그램','impact-mini-3-v':'검증됨','impact-mini-3-l':'온체인 감사',
+      'cta-eyebrow':'다음 10억 사용자','cta-h2':'글로벌 슈퍼 월렛<br><span class="grad-violet-text">for Web3.</span>',
+      'cta-p':'소셜과 금융이 융합됩니다. 크리에이터는 자신의 가치를 소유합니다. 다음 10억 사용자를 위해 만들었습니다 — 그리고 가장 먼저 도달하는 파운더를 위해.',
+      'cta-primary':'$2.5만 배분 예약','cta-ghost':'백서 읽기',
+      'cta-stat-1-l':'라운드 1','cta-stat-2-l':'최소 티켓','cta-stat-3-l':'라운드 2 배수','cta-stat-4-l':'공개 배수',
+      'footer-brand-p':'Web3를 위한 글로벌 슈퍼 월렛. 소셜, 크리에이터, 금융 — 하나의 정체성 아래.',
+      'footer-prod-h5':'제품','footer-prod-1':'소셜 피드','footer-prod-2':'채팅','footer-prod-3':'동영상','footer-prod-4':'월렛 &amp; 거래소',
+      'footer-inv-h5':'투자자','footer-inv-1':'파운더스 라운드','footer-inv-2':'백서','footer-inv-3':'토크노믹스','footer-inv-4':'로드맵',
+      'footer-co-h5':'회사','footer-co-1':'임팩트','footer-co-2':'팀','footer-co-3':'채용','footer-co-4':'연락처',
+    },
+  };
+
+  function applyLang(lang) {
+    const t = T[lang] || T.en;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.dataset.i18n;
+      if (t[k] !== undefined) el.textContent = t[k];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      const k = el.dataset.i18nHtml;
+      if (t[k] !== undefined) el.innerHTML = t[k];
+    });
+    const meta = LANG_META[lang];
+    document.getElementById('langCurrentFlag').textContent = meta.flag;
+    document.getElementById('langCurrentCode').textContent = meta.code;
+    // Desktop dropdown
+    document.querySelectorAll('.lang-option').forEach(opt => {
+      const active = opt.dataset.lang === lang;
+      opt.classList.toggle('active', active);
+      const ck = opt.querySelector('.lo-check');
+      if (ck) ck.textContent = active ? '✓' : '';
+    });
+    // Mobile pills
+    document.querySelectorAll('.mob-lang-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.dataset.mobileLang === lang);
+    });
+    document.documentElement.lang = lang;
+    try { localStorage.setItem('pwx-lang', lang); } catch(e) {}
+  }
+
+  // Desktop lang dropdown
+  const _ls = document.getElementById('langSwitcher');
+  const _lb = document.getElementById('langBtn');
+  _lb.addEventListener('click', e => { e.stopPropagation(); _ls.classList.toggle('open'); });
+  document.addEventListener('click', e => { if (!_ls.contains(e.target)) _ls.classList.remove('open'); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { _ls.classList.remove('open'); closeMobMenu(); } });
+  document.querySelectorAll('.lang-option').forEach(opt => {
+    opt.addEventListener('click', () => { applyLang(opt.dataset.lang); _ls.classList.remove('open'); });
+  });
+
+  // Mobile lang pills
+  document.querySelectorAll('.mob-lang-pill').forEach(pill => {
+    pill.addEventListener('click', () => applyLang(pill.dataset.mobileLang));
+  });
+
+  // ── Burger / Mobile menu ─────────────────────────────────────────────────
+  const burger    = document.getElementById('burger');
+  const mobMenu   = document.getElementById('mobMenu');
+  const mobOverlay = document.getElementById('mobOverlay');
+  const mobClose  = document.getElementById('mobClose');
+
+  function openMobMenu() {
+    burger.classList.add('open');
+    burger.setAttribute('aria-expanded', 'true');
+    mobMenu.classList.add('open');
+    mobMenu.setAttribute('aria-hidden', 'false');
+    mobOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMobMenu() {
+    burger.classList.remove('open');
+    burger.setAttribute('aria-expanded', 'false');
+    mobMenu.classList.remove('open');
+    mobMenu.setAttribute('aria-hidden', 'true');
+    mobOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  burger.addEventListener('click', () => mobMenu.classList.contains('open') ? closeMobMenu() : openMobMenu());
+  mobClose.addEventListener('click', closeMobMenu);
+  mobOverlay.addEventListener('click', closeMobMenu);
+
+  // Close menu and scroll on mobile nav link click
+  document.querySelectorAll('.mob-nav a, .mob-cta, #mobBrand').forEach(a => {
+    a.addEventListener('click', () => {
+      closeMobMenu();
+    });
+  });
+
+  try {
+    const saved = localStorage.getItem('pwx-lang');
+    if (saved && T[saved]) applyLang(saved);
+  } catch(e) {}
+</script>
+</body>
+</html>
